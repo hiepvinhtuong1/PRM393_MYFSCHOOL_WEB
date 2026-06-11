@@ -1,0 +1,25 @@
+# Maven
+myfptschool-be/target/
+myfptschool-be/.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/
+
+# Node (web sau này)
+myfptschool-web/node_modules/
+myfptschool-web/.next/
+myfptschool-web/dist/
+
+# Environment
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
