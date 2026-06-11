@@ -21,7 +21,8 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration-ms: 86400000     # 24 giờ
+    expiration-ms: 3600000              # 1 giờ
+    refresh-expiration-ms: 604800000    # 7 ngày
 
 springdoc:
   api-docs:

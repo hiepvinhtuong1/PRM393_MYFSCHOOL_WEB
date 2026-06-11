@@ -19,7 +19,7 @@ CREATE TABLE users (
     username      VARCHAR(50)  NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role          VARCHAR(20)  NOT NULL
-                      CHECK (role IN ('student', 'parent', 'teacher', 'homeroom_teacher', 'admin')),
+                      CHECK (role IN ('STUDENT', 'PARENT', 'TEACHER', 'HOMEROOM_TEACHER', 'ADMIN')),
     is_active     BOOLEAN      NOT NULL DEFAULT true,
     created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMP    NOT NULL DEFAULT NOW()
