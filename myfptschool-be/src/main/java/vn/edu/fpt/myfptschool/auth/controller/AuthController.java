@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.fpt.myfptschool.auth.dto.LoginRequest;
 import vn.edu.fpt.myfptschool.auth.dto.LoginResponse;
+import vn.edu.fpt.myfptschool.auth.dto.RefreshRequest;
 import vn.edu.fpt.myfptschool.auth.service.AuthService;
 import vn.edu.fpt.myfptschool.common.dto.ApiResponse;
 
@@ -19,7 +20,19 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request) {
-        LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.ok(response));
+        return ResponseEntity.ok(ApiResponse.ok(authService.login(request)));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(
+            @Valid @RequestBody RefreshRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.refresh(request)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody RefreshRequest request) {
+        authService.logout(request);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

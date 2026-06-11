@@ -6,23 +6,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.auth.dto.LoginRequest;
 import vn.edu.fpt.myfptschool.auth.dto.LoginResponse;
+import vn.edu.fpt.myfptschool.auth.dto.RefreshRequest;
 import vn.edu.fpt.myfptschool.auth.entity.User;
+import vn.edu.fpt.myfptschool.auth.entity.UserSession;
 import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
+import vn.edu.fpt.myfptschool.auth.repository.UserSessionRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.config.AppProperties;
 import vn.edu.fpt.myfptschool.security.JwtTokenProvider;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserSessionRepository userSessionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AppProperties appProperties;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
@@ -35,13 +43,56 @@ public class AuthService {
             throw new AppException(ErrorCode.ACCOUNT_DISABLED);
         }
 
-        String token = jwtTokenProvider.generateToken(user);
-        long expiresAt = System.currentTimeMillis() + appProperties.getJwt().getExpirationMs();
+        // Xóa session cũ cùng platform (1 thiết bị = 1 session)
+        userSessionRepository.deleteByUserAndPlatform(user, request.getPlatform());
+
+        return buildResponse(user, request.getPlatform());
+    }
+
+    @Transactional
+    public LoginResponse refresh(RefreshRequest request) {
+        UserSession session = userSessionRepository.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        if (session.isExpired()) {
+            userSessionRepository.delete(session);
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = session.getUser();
+        if (!user.isActive()) {
+            throw new AppException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        String platform = session.getPlatform();
+
+        // Token rotation: xóa session cũ, tạo session mới
+        userSessionRepository.delete(session);
+
+        return buildResponse(user, platform);
+    }
+
+    @Transactional
+    public void logout(RefreshRequest request) {
+        userSessionRepository.findByToken(request.getRefreshToken())
+                .ifPresent(userSessionRepository::delete);
+    }
+
+    private LoginResponse buildResponse(User user, String platform) {
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+
+        String refreshToken = UUID.randomUUID().toString();
+        long refreshMs = appProperties.getJwt().getRefreshExpirationMs();
+        LocalDateTime refreshExpiry = LocalDateTime.now(ZoneOffset.UTC)
+                .plusSeconds(refreshMs / 1000);
+
+        userSessionRepository.save(UserSession.create(user, refreshToken, platform, refreshExpiry));
 
         return LoginResponse.builder()
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(appProperties.getJwt().getExpirationMs() / 1000)
                 .role(user.getRole().name())
-                .expiresAt(expiresAt)
                 .build();
     }
 }

@@ -19,7 +19,7 @@ public class JwtTokenProvider {
 
     private final AppProperties appProperties;
 
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + appProperties.getJwt().getExpirationMs());
         return Jwts.builder()

@@ -16,3 +16,4 @@ spring:
 app:
   jwt:
     secret: dev-secret-key-change-in-production-must-be-at-least-256-bits
+    expiration-ms: 86400000             # 24 giờ trong dev cho dễ test
