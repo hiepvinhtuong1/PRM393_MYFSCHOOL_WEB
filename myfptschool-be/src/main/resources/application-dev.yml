@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/myfptschool_dev
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://localhost:5432/myfptschool_dev?TimeZone=UTC
+    username: root
+    password: hiep2004
 
   jpa:
     show-sql: true
