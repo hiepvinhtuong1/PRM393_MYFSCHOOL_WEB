@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import vn.edu.fpt.myfptschool.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -12,11 +13,7 @@ import java.time.ZoneOffset;
 @Table(name = "user_sessions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSession {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class UserSession extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -30,9 +27,6 @@ public class UserSession {
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
-
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     public static UserSession create(User user, String token, String platform, LocalDateTime expiresAt) {
         UserSession s = new UserSession();
