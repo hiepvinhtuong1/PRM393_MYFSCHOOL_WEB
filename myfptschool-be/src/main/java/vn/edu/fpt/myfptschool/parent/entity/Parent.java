@@ -61,6 +61,14 @@ public class Parent extends BaseEntity {
         return p;
     }
 
+    public void update(String fullName, LocalDate dateOfBirth, String gender, String phone, String email) {
+        this.fullName = fullName;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+    }
+
     public void addChild(Student student) {
         children.add(student);
     }

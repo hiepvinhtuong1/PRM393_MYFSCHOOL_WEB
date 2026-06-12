@@ -12,4 +12,15 @@ public interface ParentRepository extends JpaRepository<Parent, Long> {
 
     @Query("SELECT p FROM Parent p LEFT JOIN FETCH p.children c LEFT JOIN FETCH c.classroom cl LEFT JOIN FETCH cl.campus WHERE p.user = :user")
     Optional<Parent> findByUserWithChildren(@Param("user") User user);
+
+    @Query("SELECT p FROM Parent p LEFT JOIN FETCH p.children WHERE p.id = :id")
+    Optional<Parent> findByIdWithChildren(@Param("id") Long id);
+
+    boolean existsByParentCode(String parentCode);
+
+    long countByChildrenId(Long studentId);
+
+    boolean existsByIdAndChildrenId(Long parentId, Long studentId);
+
+    Optional<Parent> findByParentCode(String parentCode);
 }

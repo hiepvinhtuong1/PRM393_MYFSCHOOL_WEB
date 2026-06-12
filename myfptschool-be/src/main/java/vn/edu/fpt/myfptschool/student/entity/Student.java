@@ -38,13 +38,16 @@ public class Student extends BaseEntity {
     @Column(length = 100)
     private String email;
 
+    @Column(name = "photo_url", length = 500)
+    private String photoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classroom_id")
     private Classroom classroom;
 
     public static Student create(User user, String studentCode, String fullName,
                                  LocalDate dateOfBirth, String gender, String phone,
-                                 String email, Classroom classroom) {
+                                 String email, String photoUrl, Classroom classroom) {
         Student s = new Student();
         s.user = user;
         s.studentCode = studentCode;
@@ -53,17 +56,19 @@ public class Student extends BaseEntity {
         s.gender = gender;
         s.phone = phone;
         s.email = email;
+        s.photoUrl = photoUrl;
         s.classroom = classroom;
         return s;
     }
 
     public void update(String fullName, LocalDate dateOfBirth, String gender,
-                       String phone, String email, Classroom classroom) {
+                       String phone, String email, String photoUrl, Classroom classroom) {
         this.fullName = fullName;
         this.dateOfBirth = dateOfBirth;
         this.gender = gender;
         this.phone = phone;
         this.email = email;
+        this.photoUrl = photoUrl;
         this.classroom = classroom;
     }
 }

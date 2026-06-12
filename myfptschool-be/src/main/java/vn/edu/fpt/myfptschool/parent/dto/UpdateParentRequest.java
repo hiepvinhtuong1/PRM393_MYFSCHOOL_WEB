@@ -1,8 +1,8 @@
-package vn.edu.fpt.myfptschool.student.dto;
+package vn.edu.fpt.myfptschool.parent.dto;
 
 import jakarta.validation.constraints.*;
 
-public record CreateStudentRequest(
+public record UpdateParentRequest(
         @NotBlank @Size(min = 2, max = 100)
         String fullName,
 
@@ -16,16 +16,5 @@ public record CreateStudentRequest(
         String phone,
 
         @Email(message = "Email không hợp lệ")
-        String email,
-
-        String photoUrl,
-
-        @NotNull Long classroomId,
-
-        @Size(min = 4, max = 50)
-        @Pattern(regexp = "^[a-z0-9_]+$", message = "Tên đăng nhập chỉ chứa chữ thường, số và dấu _")
-        String username,
-
-        @Size(min = 6, max = 100, message = "Mật khẩu phải từ 6 đến 100 ký tự")
-        String password
+        String email
 ) {}

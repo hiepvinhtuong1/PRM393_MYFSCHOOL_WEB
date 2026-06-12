@@ -1,8 +1,12 @@
-package vn.edu.fpt.myfptschool.student.dto;
+package vn.edu.fpt.myfptschool.parent.dto;
 
 import jakarta.validation.constraints.*;
 
-public record CreateStudentRequest(
+public record CreateParentRequest(
+        @NotBlank
+        @Pattern(regexp = "^(\\d{9}|\\d{12})$", message = "CCCD/CMND phải là 9 hoặc 12 chữ số")
+        String parentCode,
+
         @NotBlank @Size(min = 2, max = 100)
         String fullName,
 
@@ -17,10 +21,6 @@ public record CreateStudentRequest(
 
         @Email(message = "Email không hợp lệ")
         String email,
-
-        String photoUrl,
-
-        @NotNull Long classroomId,
 
         @Size(min = 4, max = 50)
         @Pattern(regexp = "^[a-z0-9_]+$", message = "Tên đăng nhập chỉ chứa chữ thường, số và dấu _")

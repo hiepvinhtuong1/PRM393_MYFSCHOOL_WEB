@@ -91,28 +91,43 @@ public class AdminStudentController {
             headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
+            // Student cols (blue, required) + parent cols (green, optional — CCCD as identifier)
             String[] headers = {
-                "Mã học sinh", "Họ và tên", "Ngày sinh (dd/MM/yyyy)",
-                "Giới tính", "Số điện thoại", "Email", "Lớp"
+                "Họ và tên HS (*)", "Ngày sinh HS (dd/MM/yyyy)", "Giới tính HS",
+                "SĐT HS", "Email HS", "Lớp (*)",
+                "CCCD/CMND phụ huynh", "Họ tên phụ huynh", "Ngày sinh PH (dd/MM/yyyy)",
+                "Giới tính PH", "SĐT phụ huynh", "Email phụ huynh"
             };
+
+            CellStyle parentHeaderStyle = wb.createCellStyle();
+            Font parentFont = wb.createFont();
+            parentFont.setBold(true);
+            parentHeaderStyle.setFont(parentFont);
+            parentHeaderStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            parentHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerStyle);
-                sheet.setColumnWidth(i, 6000);
+                cell.setCellStyle(i < 6 ? headerStyle : parentHeaderStyle);
+                sheet.setColumnWidth(i, 6500);
             }
 
             // Sample row
             Row sample = sheet.createRow(1);
-            sample.createCell(0).setCellValue("STU002");
-            sample.createCell(1).setCellValue("Trần Thị B");
-            sample.createCell(2).setCellValue("20/05/2009");
-            sample.createCell(3).setCellValue("Nữ");
-            sample.createCell(4).setCellValue("0901234568");
-            sample.createCell(5).setCellValue("b.tran@fpt.edu.vn");
-            sample.createCell(6).setCellValue("12A1");
+            sample.createCell(0).setCellValue("Trần Thị B");
+            sample.createCell(1).setCellValue("20/05/2009");
+            sample.createCell(2).setCellValue("Nữ");
+            sample.createCell(3).setCellValue("0901234568");
+            sample.createCell(4).setCellValue("b.tran@fpt.edu.vn");
+            sample.createCell(5).setCellValue("12A1");
+            sample.createCell(6).setCellValue("123456789012");
+            sample.createCell(7).setCellValue("Nguyễn Văn C");
+            sample.createCell(8).setCellValue("15/03/1980");
+            sample.createCell(9).setCellValue("Nam");
+            sample.createCell(10).setCellValue("0912345678");
+            sample.createCell(11).setCellValue("c.nguyen@gmail.com");
 
             wb.write(out);
             return out.toByteArray();

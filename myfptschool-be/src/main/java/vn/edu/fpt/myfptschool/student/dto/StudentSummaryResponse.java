@@ -9,7 +9,8 @@ public record StudentSummaryResponse(
         String dateOfBirth,
         String gender,
         String phone,
-        String email
+        String email,
+        String photoUrl
 ) {
     public static StudentSummaryResponse from(Student s) {
         return new StudentSummaryResponse(
@@ -19,7 +20,8 @@ public record StudentSummaryResponse(
                 s.getDateOfBirth() != null ? s.getDateOfBirth().toString() : null,
                 s.getGender(),
                 s.getPhone(),
-                s.getEmail()
+                s.getEmail(),
+                s.getPhotoUrl()
         );
     }
 }
