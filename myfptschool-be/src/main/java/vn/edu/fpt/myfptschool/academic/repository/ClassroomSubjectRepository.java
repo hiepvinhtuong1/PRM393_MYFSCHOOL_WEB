@@ -7,9 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vn.edu.fpt.myfptschool.academic.entity.ClassroomSubject;
 
+import java.util.Optional;
+
 public interface ClassroomSubjectRepository extends JpaRepository<ClassroomSubject, Long> {
 
     boolean existsByClassroomIdAndSubjectIdAndSemesterId(Long classroomId, Long subjectId, Long semesterId);
+
+    @Query("SELECT cs FROM ClassroomSubject cs JOIN FETCH cs.classroom JOIN FETCH cs.subject JOIN FETCH cs.teacher WHERE cs.id = :id")
+    Optional<ClassroomSubject> findByIdWithDetails(@Param("id") Long id);
 
     @Query(value = """
             SELECT cs FROM ClassroomSubject cs
