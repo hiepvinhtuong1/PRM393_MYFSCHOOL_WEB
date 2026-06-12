@@ -3,8 +3,8 @@ package vn.edu.fpt.myfptschool.parent.dto;
 import jakarta.validation.constraints.*;
 
 public record CreateParentRequest(
-        @NotBlank @Size(min = 3, max = 20)
-        @Pattern(regexp = "^[A-Z0-9]+$", message = "Mã phụ huynh chỉ được chứa chữ hoa và số")
+        @NotBlank
+        @Pattern(regexp = "^(\\d{9}|\\d{12})$", message = "CCCD/CMND phải là 9 hoặc 12 chữ số")
         String parentCode,
 
         @NotBlank @Size(min = 2, max = 100)

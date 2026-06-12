@@ -35,12 +35,13 @@ public class AdminParentService {
     @Transactional
     public ParentResponse createParent(CreateParentRequest req) {
         if (parentRepository.existsByParentCode(req.parentCode())) {
-            throw new AppException(ErrorCode.VALIDATION_FAILED, "Mã phụ huynh đã tồn tại: " + req.parentCode());
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "CCCD/CMND đã được đăng ký: " + req.parentCode());
         }
 
+        // CCCD is all digits — use directly as username; admin may override with custom username
         String username = (req.username() != null && !req.username().isBlank())
                 ? req.username()
-                : req.parentCode().toLowerCase().replace("-", "");
+                : req.parentCode();
 
         if (userRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "Tên đăng nhập đã tồn tại: " + username);

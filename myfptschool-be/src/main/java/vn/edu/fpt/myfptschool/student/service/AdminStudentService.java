@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 public class AdminStudentService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final Pattern CODE_PATTERN  = Pattern.compile("^[A-Z0-9]{3,20}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0[3-9]\\d{8}$");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern CCCD_PATTERN  = Pattern.compile("^(\\d{9}|\\d{12})$");
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
@@ -43,32 +43,36 @@ public class AdminStudentService {
     private final ParentRepository parentRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // -------------------------------------------------------------------------
+    // Single CRUD
+    // -------------------------------------------------------------------------
+
     @Transactional
     public StudentSummaryResponse createStudent(CreateStudentRequest req) {
-        if (studentRepository.existsByStudentCode(req.studentCode())) {
-            throw new AppException(ErrorCode.VALIDATION_FAILED, "Mã học sinh đã tồn tại: " + req.studentCode());
-        }
-
-        String username = req.username() != null && !req.username().isBlank()
+        String username = (req.username() != null && !req.username().isBlank())
                 ? req.username()
-                : req.studentCode().toLowerCase().replace("-", "");
+                : generateUsername(studentRepository.count() + 1);
 
         if (userRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "Tên đăng nhập đã tồn tại: " + username);
         }
 
-        String password = req.password() != null && !req.password().isBlank()
+        Classroom classroom = classroomRepository.findById(req.classroomId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+
+        String password = (req.password() != null && !req.password().isBlank())
                 ? req.password()
                 : "Student@123";
 
-        Classroom classroom = classroomRepository.findById(req.classroomId())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        String studentCode = String.format("HS%d%05d", LocalDate.now().getYear(),
+                studentRepository.count() + 1);
 
         User user = userRepository.save(User.create(username, passwordEncoder.encode(password), Role.STUDENT));
 
         Student student = studentRepository.save(Student.create(
-                user, req.studentCode(), req.fullName(),
-                parseStudentDate(req.dateOfBirth()), req.gender(), req.phone(), req.email(), classroom));
+                user, studentCode, req.fullName(),
+                parseStudentDate(req.dateOfBirth()), req.gender(), req.phone(),
+                req.email(), req.photoUrl(), classroom));
 
         return StudentSummaryResponse.from(student);
     }
@@ -81,7 +85,8 @@ public class AdminStudentService {
         Classroom classroom = classroomRepository.findById(req.classroomId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
-        student.update(req.fullName(), parseStudentDate(req.dateOfBirth()), req.gender(), req.phone(), req.email(), classroom);
+        student.update(req.fullName(), parseStudentDate(req.dateOfBirth()), req.gender(),
+                req.phone(), req.email(), req.photoUrl(), classroom);
 
         return StudentSummaryResponse.from(studentRepository.save(student));
     }
@@ -95,14 +100,13 @@ public class AdminStudentService {
     }
 
     // -------------------------------------------------------------------------
-    // Excel import
+    // Excel import — cols: 0=Họ tên, 1=Ngày sinh, 2=Giới tính, 3=SĐT,
+    //                      4=Email, 5=Lớp, 6=CCCD PH, 7=Họ tên PH,
+    //                      8=Ngày sinh PH, 9=Giới tính PH, 10=SĐT PH, 11=Email PH
     // -------------------------------------------------------------------------
 
     private record ParsedRow(
-            // student (cols 0-6)
-            String studentCode, String fullName, String dateOfBirth,
-            String gender, String phone, String email, String className,
-            // parent (cols 7-12, all optional — blank = no parent)
+            String fullName, String dateOfBirth, String gender, String phone, String email, String className,
             String parentCode, String parentFullName, String parentDateOfBirth,
             String parentGender, String parentPhone, String parentEmail,
             int rowNum
@@ -118,8 +122,8 @@ public class AdminStudentService {
         Map<String, Classroom> classroomByName = classroomRepository.findAllWithDetails()
                 .stream().collect(Collectors.toMap(cl -> cl.getName().toLowerCase(), cl -> cl));
 
-        // Track parent codes validated within this batch to avoid re-validating siblings
         Set<String> validatedParentCodes = new HashSet<>();
+        Set<String> seenFullNames = new HashSet<>(); // detect duplicate rows in batch
 
         try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = wb.getSheetAt(0);
@@ -130,32 +134,20 @@ public class AdminStudentService {
 
                 int rowNum = i + 1;
 
-                // --- Read student fields ---
-                String studentCode = cellStr(row, 0);
-                String fullName    = cellStr(row, 1);
-                String dateOfBirth = cellStr(row, 2);
-                String gender      = cellStr(row, 3);
-                String phone       = cellStr(row, 4);
-                String email       = cellStr(row, 5);
-                String className   = cellStr(row, 6);
-
-                // --- Read parent fields ---
-                String parentCode      = cellStr(row, 7);
-                String parentFullName  = cellStr(row, 8);
-                String parentDob       = cellStr(row, 9);
-                String parentGender    = cellStr(row, 10);
-                String parentPhone     = cellStr(row, 11);
-                String parentEmail     = cellStr(row, 12);
+                String fullName    = cellStr(row, 0);
+                String dateOfBirth = cellStr(row, 1);
+                String gender      = cellStr(row, 2);
+                String phone       = cellStr(row, 3);
+                String email       = cellStr(row, 4);
+                String className   = cellStr(row, 5);
+                String parentCode  = cellStr(row, 6);
+                String parentFullName  = cellStr(row, 7);
+                String parentDob       = cellStr(row, 8);
+                String parentGender    = cellStr(row, 9);
+                String parentPhone     = cellStr(row, 10);
+                String parentEmail     = cellStr(row, 11);
 
                 // --- Validate student ---
-                if (studentCode.isBlank()) {
-                    errors.add(new ImportErrorRow(rowNum, "Mã học sinh", "Không được để trống"));
-                    continue;
-                }
-                if (!CODE_PATTERN.matcher(studentCode).matches()) {
-                    errors.add(new ImportErrorRow(rowNum, "Mã học sinh", "Chỉ chứa chữ hoa và số, 3-20 ký tự"));
-                    continue;
-                }
                 if (fullName.isBlank()) {
                     errors.add(new ImportErrorRow(rowNum, "Họ và tên", "Không được để trống"));
                     continue;
@@ -177,33 +169,23 @@ public class AdminStudentService {
                     errors.add(new ImportErrorRow(rowNum, "Email", "Không hợp lệ"));
                     continue;
                 }
-                if (studentRepository.existsByStudentCode(studentCode)) {
-                    errors.add(new ImportErrorRow(rowNum, "Mã học sinh", "Đã tồn tại: " + studentCode));
-                    continue;
-                }
-                if (userRepository.existsByUsername(studentCode.toLowerCase().replace("-", ""))) {
-                    errors.add(new ImportErrorRow(rowNum, "Tên đăng nhập HS", "Đã tồn tại: " + studentCode.toLowerCase()));
-                    continue;
-                }
                 if (!dateOfBirth.isBlank()) {
                     String err = validateDateAge(dateOfBirth, 14, 20);
                     if (err != null) { errors.add(new ImportErrorRow(rowNum, "Ngày sinh HS", err)); continue; }
                 }
 
-                // --- Validate parent (only if parentCode provided and not already validated in batch) ---
+                // --- Validate parent (only when CCCD provided and not yet validated in batch) ---
                 if (!parentCode.isBlank()) {
-                    String pCodeKey = parentCode.toLowerCase();
-                    boolean inBatch = validatedParentCodes.contains(pCodeKey);
+                    boolean inBatch = validatedParentCodes.contains(parentCode);
                     boolean inDB    = !inBatch && parentRepository.existsByParentCode(parentCode);
 
                     if (!inBatch && !inDB) {
-                        // New parent — full validation required
-                        if (!CODE_PATTERN.matcher(parentCode).matches()) {
-                            errors.add(new ImportErrorRow(rowNum, "Mã phụ huynh", "Chỉ chứa chữ hoa và số, 3-20 ký tự"));
+                        if (!CCCD_PATTERN.matcher(parentCode).matches()) {
+                            errors.add(new ImportErrorRow(rowNum, "CCCD/CMND phụ huynh", "Phải là 9 hoặc 12 chữ số"));
                             continue;
                         }
                         if (parentFullName.isBlank()) {
-                            errors.add(new ImportErrorRow(rowNum, "Họ tên phụ huynh", "Không được để trống khi có mã PH"));
+                            errors.add(new ImportErrorRow(rowNum, "Họ tên phụ huynh", "Không được để trống khi có CCCD"));
                             continue;
                         }
                         if (parentFullName.length() < 2 || parentFullName.length() > 100) {
@@ -222,17 +204,16 @@ public class AdminStudentService {
                             String err = validateDateAge(parentDob, 25, 999);
                             if (err != null) { errors.add(new ImportErrorRow(rowNum, "Ngày sinh phụ huynh", err)); continue; }
                         }
-                        if (userRepository.existsByUsername(pCodeKey)) {
-                            errors.add(new ImportErrorRow(rowNum, "Tên đăng nhập PH", "Đã tồn tại: " + pCodeKey));
+                        if (userRepository.existsByUsername(parentCode)) {
+                            errors.add(new ImportErrorRow(rowNum, "CCCD phụ huynh", "Tài khoản đã tồn tại với CCCD: " + parentCode));
                             continue;
                         }
-                        validatedParentCodes.add(pCodeKey);
+                        validatedParentCodes.add(parentCode);
                     }
-                    // inBatch or inDB → skip validation, will reuse
                 }
 
                 parsedRows.add(new ParsedRow(
-                        studentCode, fullName, dateOfBirth, gender, phone, email, className,
+                        fullName, dateOfBirth, gender, phone, email, className,
                         parentCode, parentFullName, parentDob, parentGender, parentPhone, parentEmail,
                         rowNum));
             }
@@ -245,40 +226,40 @@ public class AdminStudentService {
         }
 
         // --- Save all (all-or-nothing) ---
+        long baseStudentCount = studentRepository.count();
         Map<String, Parent> inBatchParents = new HashMap<>();
         int parentsCreated = 0;
+        int year = LocalDate.now().getYear();
 
-        for (ParsedRow r : parsedRows) {
-            // Create student
+        for (int idx = 0; idx < parsedRows.size(); idx++) {
+            ParsedRow r = parsedRows.get(idx);
+
+            String studentCode = String.format("HS%d%05d", year, baseStudentCount + idx + 1);
+            String studentUsername = generateUsername(baseStudentCount + idx + 1);
+
             Classroom classroom = classroomByName.get(r.className().toLowerCase());
-            String studentUsername = r.studentCode().toLowerCase().replace("-", "");
             User studentUser = userRepository.save(
                     User.create(studentUsername, passwordEncoder.encode("Student@123"), Role.STUDENT));
             Student student = studentRepository.save(Student.create(
-                    studentUser, r.studentCode(), r.fullName(),
+                    studentUser, studentCode, r.fullName(),
                     r.dateOfBirth().isBlank() ? null : LocalDate.parse(r.dateOfBirth(), DATE_FMT),
-                    r.gender(), r.phone(), r.email(), classroom));
+                    r.gender(), r.phone(), r.email(), null, classroom));
 
-            // Handle parent
             if (r.hasParent()) {
-                String pCodeKey = r.parentCode().toLowerCase();
-
-                Parent parent = inBatchParents.get(pCodeKey);
+                Parent parent = inBatchParents.get(r.parentCode());
                 if (parent == null) {
                     parent = parentRepository.findByParentCode(r.parentCode()).orElse(null);
                 }
                 if (parent == null) {
-                    // Create new parent + user
                     User parentUser = userRepository.save(
-                            User.create(pCodeKey, passwordEncoder.encode("Parent@123"), Role.PARENT));
+                            User.create(r.parentCode(), passwordEncoder.encode("Parent@123"), Role.PARENT));
                     parent = parentRepository.save(Parent.create(
                             parentUser, r.parentCode(), r.parentFullName(),
                             r.parentDateOfBirth().isBlank() ? null : LocalDate.parse(r.parentDateOfBirth(), DATE_FMT),
                             r.parentGender(), r.parentPhone(), r.parentEmail()));
                     parentsCreated++;
                 }
-                inBatchParents.put(pCodeKey, parent);
-
+                inBatchParents.put(r.parentCode(), parent);
                 parent.addChild(student);
                 parentRepository.save(parent);
             }
@@ -290,6 +271,11 @@ public class AdminStudentService {
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /** Username pattern: hs + zero-padded sequence, e.g. hs00001 */
+    private String generateUsername(long seq) {
+        return String.format("hs%05d", seq);
+    }
 
     private LocalDate parseStudentDate(String raw) {
         if (raw == null || raw.isBlank()) return null;
@@ -306,7 +292,6 @@ public class AdminStudentService {
         }
     }
 
-    /** Returns an error message string, or null if valid. */
     private String validateDateAge(String raw, int minAge, int maxAge) {
         try {
             LocalDate dob = LocalDate.parse(raw, DATE_FMT);
@@ -344,7 +329,7 @@ public class AdminStudentService {
     }
 
     private boolean isRowEmpty(Row row) {
-        for (int c = 0; c <= 6; c++) {
+        for (int c = 0; c <= 5; c++) {
             if (!cellStr(row, c).isBlank()) return false;
         }
         return true;

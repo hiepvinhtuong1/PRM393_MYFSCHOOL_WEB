@@ -3,10 +3,6 @@ package vn.edu.fpt.myfptschool.student.dto;
 import jakarta.validation.constraints.*;
 
 public record CreateStudentRequest(
-        @NotBlank @Size(min = 3, max = 20)
-        @Pattern(regexp = "^[A-Z0-9]+$", message = "Mã học sinh chỉ được chứa chữ hoa và số")
-        String studentCode,
-
         @NotBlank @Size(min = 2, max = 100)
         String fullName,
 
@@ -21,6 +17,8 @@ public record CreateStudentRequest(
 
         @Email(message = "Email không hợp lệ")
         String email,
+
+        String photoUrl,
 
         @NotNull Long classroomId,
 

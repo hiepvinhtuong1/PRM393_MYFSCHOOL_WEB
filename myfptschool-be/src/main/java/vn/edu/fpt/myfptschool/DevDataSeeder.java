@@ -101,7 +101,7 @@ public class DevDataSeeder implements CommandLineRunner {
         // --- Student & Parent profiles ---
         Student studentProfile = studentRepository.save(Student.create(
                 student, "STU001", "Nguyễn Văn An",
-                LocalDate.of(2005, 3, 15), "Nam", "0901234567", "an.nguyen@fpt.edu.vn", classroom));
+                LocalDate.of(2005, 3, 15), "Nam", "0901234567", "an.nguyen@fpt.edu.vn", null, classroom));
         Parent parentProfile = parentRepository.save(Parent.create(
                 parent, "PAR001", "Nguyễn Văn Bình",
                 LocalDate.of(1975, 8, 20), "Nam", "0912345678", "binh.nguyen@gmail.com"));

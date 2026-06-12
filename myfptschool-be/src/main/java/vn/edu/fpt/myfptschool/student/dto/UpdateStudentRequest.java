@@ -18,5 +18,7 @@ public record UpdateStudentRequest(
         @Email(message = "Email không hợp lệ")
         String email,
 
+        String photoUrl,
+
         @NotNull Long classroomId
 ) {}
