@@ -44,4 +44,8 @@ public class GradeRecord extends BaseEntity {
         gr.score = score;
         return gr;
     }
+
+    public void update(BigDecimal score) {
+        this.score = score;
+    }
 }
