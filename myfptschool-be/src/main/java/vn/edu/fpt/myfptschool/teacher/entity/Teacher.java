@@ -31,12 +31,20 @@ public class Teacher extends BaseEntity {
     @JoinColumn(name = "campus_id")
     private Campus campus;
 
-    public static Teacher create(User user, String fullName, String email, Campus campus) {
+    public static Teacher create(User user, String fullName, String phone, String email, Campus campus) {
         Teacher t = new Teacher();
         t.user = user;
         t.fullName = fullName;
+        t.phone = phone;
         t.email = email;
         t.campus = campus;
         return t;
+    }
+
+    public void update(String fullName, String phone, String email, Campus campus) {
+        this.fullName = fullName;
+        this.phone = phone;
+        this.email = email;
+        this.campus = campus;
     }
 }

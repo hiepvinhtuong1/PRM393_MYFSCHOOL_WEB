@@ -110,7 +110,7 @@ public class DevDataSeeder implements CommandLineRunner {
 
         // --- Teacher ---
         Teacher teacherProfile = teacherRepository.save(
-                Teacher.create(teacher, "Nguyễn Văn A", "a.nguyen@fpt.edu.vn", campus));
+                Teacher.create(teacher, "Nguyễn Văn A", null, "a.nguyen@fpt.edu.vn", campus));
 
         // --- Subjects (8 môn THPT Phase 1) ---
         Subject toan   = subjectRepository.save(Subject.create("Toán",       "#F97316", 2));
