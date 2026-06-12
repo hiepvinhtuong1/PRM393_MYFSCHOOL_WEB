@@ -24,12 +24,16 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AdminStudentService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Pattern STUDENT_CODE_PATTERN = Pattern.compile("^[A-Z0-9]{3,20}$");
+    private static final Pattern PHONE_PATTERN        = Pattern.compile("^0[3-9]\\d{8}$");
+    private static final Pattern EMAIL_PATTERN        = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
@@ -128,13 +132,29 @@ public class AdminStudentService {
                     errors.add(new ImportErrorRow(rowNum, "Mã học sinh", "Không được để trống"));
                     continue;
                 }
+                if (!STUDENT_CODE_PATTERN.matcher(studentCode).matches()) {
+                    errors.add(new ImportErrorRow(rowNum, "Mã học sinh", "Chỉ chứa chữ hoa và số, 3-20 ký tự"));
+                    continue;
+                }
                 if (fullName.isBlank()) {
                     errors.add(new ImportErrorRow(rowNum, "Họ và tên", "Không được để trống"));
+                    continue;
+                }
+                if (fullName.length() < 2 || fullName.length() > 100) {
+                    errors.add(new ImportErrorRow(rowNum, "Họ và tên", "Phải từ 2 đến 100 ký tự"));
                     continue;
                 }
                 if (className.isBlank() || !classroomByName.containsKey(className.toLowerCase())) {
                     errors.add(new ImportErrorRow(rowNum, "Lớp",
                             className.isBlank() ? "Không được để trống" : "Không tìm thấy lớp: " + className));
+                    continue;
+                }
+                if (!phone.isBlank() && !PHONE_PATTERN.matcher(phone).matches()) {
+                    errors.add(new ImportErrorRow(rowNum, "Số điện thoại", "Không hợp lệ (10 số, bắt đầu 03-09)"));
+                    continue;
+                }
+                if (!email.isBlank() && !EMAIL_PATTERN.matcher(email).matches()) {
+                    errors.add(new ImportErrorRow(rowNum, "Email", "Không hợp lệ"));
                     continue;
                 }
                 if (studentRepository.existsByStudentCode(studentCode)) {
@@ -148,7 +168,14 @@ public class AdminStudentService {
                 }
                 if (!dateOfBirth.isBlank()) {
                     try {
-                        LocalDate.parse(dateOfBirth, DATE_FMT);
+                        LocalDate dob = LocalDate.parse(dateOfBirth, DATE_FMT);
+                        LocalDate today = LocalDate.now();
+                        int age = today.getYear() - dob.getYear();
+                        if (dob.plusYears(age).isAfter(today)) age--;
+                        if (age < 14 || age > 20) {
+                            errors.add(new ImportErrorRow(rowNum, "Ngày sinh", "Học sinh phải trong độ tuổi 14-20 (hiện tại " + age + " tuổi)"));
+                            continue;
+                        }
                     } catch (DateTimeParseException e) {
                         errors.add(new ImportErrorRow(rowNum, "Ngày sinh", "Sai định dạng, dùng dd/MM/yyyy"));
                         continue;
@@ -184,9 +211,20 @@ public class AdminStudentService {
     private LocalDate parseDate(String raw) {
         if (raw == null || raw.isBlank()) return null;
         try {
-            return LocalDate.parse(raw, DATE_FMT);
+            LocalDate dob = LocalDate.parse(raw, DATE_FMT);
+            validateAge(dob);
+            return dob;
         } catch (DateTimeParseException e) {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "Sai định dạng ngày sinh, dùng dd/MM/yyyy");
+        }
+    }
+
+    private void validateAge(LocalDate dob) {
+        LocalDate today = LocalDate.now();
+        int age = today.getYear() - dob.getYear();
+        if (dob.plusYears(age).isAfter(today)) age--;
+        if (age < 14 || age > 20) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Học sinh phải trong độ tuổi từ 14 đến 20 (hiện tại " + age + " tuổi)");
         }
     }
 
