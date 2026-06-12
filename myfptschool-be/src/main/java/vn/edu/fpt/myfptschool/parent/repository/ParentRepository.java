@@ -3,9 +3,11 @@ package vn.edu.fpt.myfptschool.parent.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import vn.edu.fpt.myfptschool.academic.entity.Classroom;
 import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.parent.entity.Parent;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ParentRepository extends JpaRepository<Parent, Long> {
@@ -23,4 +25,7 @@ public interface ParentRepository extends JpaRepository<Parent, Long> {
     boolean existsByIdAndChildrenId(Long parentId, Long studentId);
 
     Optional<Parent> findByParentCode(String parentCode);
+
+    @Query("SELECT DISTINCT p.user FROM Parent p JOIN p.children s WHERE s.classroom = :classroom")
+    List<User> findUsersByChildrenClassroom(@Param("classroom") Classroom classroom);
 }
