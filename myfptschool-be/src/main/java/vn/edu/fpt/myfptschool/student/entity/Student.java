@@ -56,4 +56,14 @@ public class Student extends BaseEntity {
         s.classroom = classroom;
         return s;
     }
+
+    public void update(String fullName, LocalDate dateOfBirth, String gender,
+                       String phone, String email, Classroom classroom) {
+        this.fullName = fullName;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+        this.classroom = classroom;
+    }
 }

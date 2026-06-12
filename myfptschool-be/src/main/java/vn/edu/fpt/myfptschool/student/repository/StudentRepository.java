@@ -19,4 +19,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Page<Student> findByClassroomOrderByFullName(Classroom classroom, Pageable pageable);
 
     long countByClassroom(Classroom classroom);
+
+    boolean existsByStudentCode(String studentCode);
+
+    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.classroom cl LEFT JOIN FETCH cl.campus WHERE s.id = :id")
+    Optional<Student> findByIdWithClassroom(@Param("id") Long id);
 }
