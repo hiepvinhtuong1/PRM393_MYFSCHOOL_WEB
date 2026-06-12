@@ -21,10 +21,14 @@ public class Subject extends BaseEntity {
     @Column(name = "sessions_per_semester")
     private Short sessionsPerSemester;
 
-    public static Subject create(String name, String colorHex) {
+    @Column(nullable = false)
+    private Short coefficient;
+
+    public static Subject create(String name, String colorHex, int coefficient) {
         Subject s = new Subject();
         s.name = name;
         s.colorHex = colorHex;
+        s.coefficient = (short) coefficient;
         return s;
     }
 }
