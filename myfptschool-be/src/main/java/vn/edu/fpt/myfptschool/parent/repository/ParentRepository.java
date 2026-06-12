@@ -21,4 +21,6 @@ public interface ParentRepository extends JpaRepository<Parent, Long> {
     long countByChildrenId(Long studentId);
 
     boolean existsByIdAndChildrenId(Long parentId, Long studentId);
+
+    Optional<Parent> findByParentCode(String parentCode);
 }

@@ -91,17 +91,28 @@ public class AdminStudentController {
             headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
+            // Student columns (required) + parent columns (optional)
             String[] headers = {
-                "Mã học sinh", "Họ và tên", "Ngày sinh (dd/MM/yyyy)",
-                "Giới tính", "Số điện thoại", "Email", "Lớp"
+                "Mã học sinh (*)", "Họ và tên HS (*)", "Ngày sinh HS (dd/MM/yyyy)",
+                "Giới tính HS", "SĐT HS", "Email HS", "Lớp (*)",
+                "Mã phụ huynh", "Họ tên phụ huynh", "Ngày sinh PH (dd/MM/yyyy)",
+                "Giới tính PH", "SĐT phụ huynh", "Email phụ huynh"
             };
+
+            // Separate style for optional parent columns
+            CellStyle parentHeaderStyle = wb.createCellStyle();
+            Font parentFont = wb.createFont();
+            parentFont.setBold(true);
+            parentHeaderStyle.setFont(parentFont);
+            parentHeaderStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            parentHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerStyle);
-                sheet.setColumnWidth(i, 6000);
+                cell.setCellStyle(i < 7 ? headerStyle : parentHeaderStyle);
+                sheet.setColumnWidth(i, 6500);
             }
 
             // Sample row
@@ -113,6 +124,12 @@ public class AdminStudentController {
             sample.createCell(4).setCellValue("0901234568");
             sample.createCell(5).setCellValue("b.tran@fpt.edu.vn");
             sample.createCell(6).setCellValue("12A1");
+            sample.createCell(7).setCellValue("PH001");
+            sample.createCell(8).setCellValue("Nguyễn Văn C");
+            sample.createCell(9).setCellValue("15/03/1980");
+            sample.createCell(10).setCellValue("Nam");
+            sample.createCell(11).setCellValue("0912345678");
+            sample.createCell(12).setCellValue("c.nguyen@gmail.com");
 
             wb.write(out);
             return out.toByteArray();
