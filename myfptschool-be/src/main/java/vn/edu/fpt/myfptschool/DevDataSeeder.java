@@ -28,6 +28,9 @@ import vn.edu.fpt.myfptschool.grade.entity.GradeRecord;
 import vn.edu.fpt.myfptschool.grade.entity.ScoreComponent;
 import vn.edu.fpt.myfptschool.grade.repository.GradeRecordRepository;
 import vn.edu.fpt.myfptschool.grade.repository.ScoreComponentRepository;
+import vn.edu.fpt.myfptschool.attendance.entity.AttendanceRecord;
+import vn.edu.fpt.myfptschool.attendance.entity.AttendanceStatus;
+import vn.edu.fpt.myfptschool.attendance.repository.AttendanceRecordRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -55,6 +58,7 @@ public class DevDataSeeder implements CommandLineRunner {
     private final LessonRepository lessonRepository;
     private final ScoreComponentRepository scoreComponentRepository;
     private final GradeRecordRepository gradeRecordRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
 
     @Override
     @Transactional
@@ -168,7 +172,43 @@ public class DevDataSeeder implements CommandLineRunner {
             GradeRecord.create(studentProfile, csVatly, dgkk, bd(6.5))
         ));
 
-        log.info("Dev seed: all data created (users, academic structure, timetable, grades)");
+        // --- Attendance records ---
+        // Query lessons back from DB (JPA auto-flushes before query within same transaction)
+        List<Lesson> toanLessons  = lessonRepository.findByClassroomSubject(csToan);
+        List<Lesson> vanLessons   = lessonRepository.findByClassroomSubject(csVan);
+        List<Lesson> anhLessons   = lessonRepository.findByClassroomSubject(csAnh);
+        List<Lesson> vatlyLessons = lessonRepository.findByClassroomSubject(csVatly);
+
+        // Toán: 4 lessons — present, present, excused_absent, late
+        seedAttendance(studentProfile, toanLessons, new AttendanceStatus[]{
+                AttendanceStatus.present, AttendanceStatus.present,
+                AttendanceStatus.excused_absent, AttendanceStatus.late
+        });
+
+        // Ngữ Văn: 4 lessons — unexcused_absent, present, present, excused_absent
+        seedAttendance(studentProfile, vanLessons, new AttendanceStatus[]{
+                AttendanceStatus.unexcused_absent, AttendanceStatus.present,
+                AttendanceStatus.present, AttendanceStatus.excused_absent
+        });
+
+        // Tiếng Anh: 4 lessons — all present
+        seedAttendance(studentProfile, anhLessons, new AttendanceStatus[]{
+                AttendanceStatus.present, AttendanceStatus.present,
+                AttendanceStatus.present, AttendanceStatus.present
+        });
+
+        // Vật Lý: 2 lessons — late, present
+        seedAttendance(studentProfile, vatlyLessons, new AttendanceStatus[]{
+                AttendanceStatus.late, AttendanceStatus.present
+        });
+
+        log.info("Dev seed: all data created (users, academic structure, timetable, grades, attendance)");
+    }
+
+    private void seedAttendance(Student student, List<Lesson> lessons, AttendanceStatus[] statuses) {
+        for (int i = 0; i < lessons.size() && i < statuses.length; i++) {
+            attendanceRecordRepository.save(AttendanceRecord.create(student, lessons.get(i), statuses[i]));
+        }
     }
 
     private ScoreComponent comp(String code) {

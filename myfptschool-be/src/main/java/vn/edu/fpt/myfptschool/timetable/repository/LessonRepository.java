@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vn.edu.fpt.myfptschool.academic.entity.Classroom;
+import vn.edu.fpt.myfptschool.academic.entity.ClassroomSubject;
 import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
 
 import java.time.LocalDate;
@@ -26,5 +27,19 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findByClassroomAndDate(
             @Param("classroom") Classroom classroom,
             @Param("date") LocalDate date
+    );
+
+    List<Lesson> findByClassroomSubject(ClassroomSubject classroomSubject);
+
+    @Query("""
+        SELECT cs.id, COUNT(l) FROM Lesson l
+        JOIN l.classroomSubject cs
+        WHERE cs.classroom.id = :classroomId
+        AND cs.semester.id = :semesterId
+        GROUP BY cs.id
+        """)
+    List<Object[]> countLessonsPerClassroomSubject(
+            @Param("classroomId") Long classroomId,
+            @Param("semesterId") Long semesterId
     );
 }
