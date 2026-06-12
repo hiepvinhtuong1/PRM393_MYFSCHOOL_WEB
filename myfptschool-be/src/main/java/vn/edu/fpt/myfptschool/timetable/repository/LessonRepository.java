@@ -32,6 +32,19 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findByClassroomSubject(ClassroomSubject classroomSubject);
 
     @Query("""
+        SELECT l FROM Lesson l
+        JOIN FETCH l.classroomSubject cs
+        JOIN FETCH cs.classroom cl
+        JOIN FETCH cs.subject s
+        JOIN FETCH cs.teacher t
+        JOIN FETCH l.startSlot ss
+        JOIN FETCH l.endSlot es
+        LEFT JOIN FETCH l.room r
+        WHERE l.id = :id
+        """)
+    Optional<Lesson> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("""
         SELECT cs.id, COUNT(l) FROM Lesson l
         JOIN l.classroomSubject cs
         WHERE cs.classroom.id = :classroomId
