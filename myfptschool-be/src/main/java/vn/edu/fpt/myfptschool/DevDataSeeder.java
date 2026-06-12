@@ -84,10 +84,19 @@ public class DevDataSeeder implements CommandLineRunner {
                 AcademicYear.create("2025-2026", LocalDate.of(2025, 9, 1), LocalDate.of(2026, 6, 30)));
         Campus campus = campusRepository.save(
                 Campus.create("FPT Hà Nội", "Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội"));
-        Classroom classroom = classroomRepository.save(
-                Classroom.create("SE1801", (short) 12, campus, academicYear));
         Semester semester = semesterRepository.save(
                 Semester.create(academicYear, "HK II", LocalDate.of(2026, 1, 6), LocalDate.of(2026, 6, 30)));
+
+        // --- 30 Classrooms cố định (3 khối × 10 lớp) ---
+        short[] gradeLevels = {10, 11, 12};
+        Classroom classroom = null;
+        for (short grade : gradeLevels) {
+            for (int i = 1; i <= 10; i++) {
+                String name = grade + "A" + i;
+                Classroom cr = classroomRepository.save(Classroom.create(name, grade, campus, academicYear));
+                if (name.equals("12A1")) classroom = cr;
+            }
+        }
 
         // --- Student & Parent profiles ---
         Student studentProfile = studentRepository.save(Student.create(
@@ -103,11 +112,15 @@ public class DevDataSeeder implements CommandLineRunner {
         Teacher teacherProfile = teacherRepository.save(
                 Teacher.create(teacher, "Nguyễn Văn A", "a.nguyen@fpt.edu.vn", campus));
 
-        // --- Subjects ---
+        // --- Subjects (8 môn THPT Phase 1) ---
         Subject toan   = subjectRepository.save(Subject.create("Toán",       "#F97316", 2));
         Subject van    = subjectRepository.save(Subject.create("Ngữ Văn",    "#3B82F6", 2));
-        Subject anh    = subjectRepository.save(Subject.create("Tiếng Anh",  "#3B82F6", 1));
+        Subject anh    = subjectRepository.save(Subject.create("Tiếng Anh",  "#06B6D4", 1));
         Subject vatly  = subjectRepository.save(Subject.create("Vật Lý",     "#22C55E", 1));
+        subjectRepository.save(Subject.create("Hóa Học",    "#EC4899", 1));
+        subjectRepository.save(Subject.create("Sinh Học",   "#10B981", 1));
+        subjectRepository.save(Subject.create("Lịch Sử",    "#F59E0B", 1));
+        subjectRepository.save(Subject.create("Địa Lý",     "#6366F1", 1));
 
         // --- ClassroomSubjects ---
         ClassroomSubject csToan  = classroomSubjectRepository.save(ClassroomSubject.create(classroom, toan,  teacherProfile, semester));
@@ -236,7 +249,7 @@ public class DevDataSeeder implements CommandLineRunner {
             }
         }
 
-        log.info("Dev seed: all data created (users, academic structure, timetable, grades, attendance, notifications)");
+        log.info("Dev seed: 30 classrooms, 8 subjects, users, timetable, grades, attendance, notifications");
     }
 
     private void seedAttendance(Student student, List<Lesson> lessons, AttendanceStatus[] statuses) {
