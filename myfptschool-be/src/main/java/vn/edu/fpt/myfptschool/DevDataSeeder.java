@@ -31,6 +31,12 @@ import vn.edu.fpt.myfptschool.grade.repository.ScoreComponentRepository;
 import vn.edu.fpt.myfptschool.attendance.entity.AttendanceRecord;
 import vn.edu.fpt.myfptschool.attendance.entity.AttendanceStatus;
 import vn.edu.fpt.myfptschool.attendance.repository.AttendanceRecordRepository;
+import vn.edu.fpt.myfptschool.notification.entity.Notification;
+import vn.edu.fpt.myfptschool.notification.entity.NotificationCategory;
+import vn.edu.fpt.myfptschool.notification.entity.NotificationRecipient;
+import vn.edu.fpt.myfptschool.notification.entity.NotificationTargetType;
+import vn.edu.fpt.myfptschool.notification.repository.NotificationRecipientRepository;
+import vn.edu.fpt.myfptschool.notification.repository.NotificationRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -59,6 +65,8 @@ public class DevDataSeeder implements CommandLineRunner {
     private final ScoreComponentRepository scoreComponentRepository;
     private final GradeRecordRepository gradeRecordRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRecipientRepository notificationRecipientRepository;
 
     @Override
     @Transactional
@@ -202,7 +210,33 @@ public class DevDataSeeder implements CommandLineRunner {
                 AttendanceStatus.late, AttendanceStatus.present
         });
 
-        log.info("Dev seed: all data created (users, academic structure, timetable, grades, attendance)");
+        // --- Notifications ---
+        Notification n1 = notificationRepository.save(Notification.create(
+                "Cảnh báo nghỉ học",
+                "Học sinh Nguyễn Văn An đã vắng mặt không phép môn Ngữ Văn. Đề nghị phụ huynh liên hệ giáo viên chủ nhiệm.",
+                NotificationCategory.attendance, NotificationTargetType.individual, studentProfile.getId(), admin));
+        Notification n2 = notificationRepository.save(Notification.create(
+                "Điểm kiểm tra giữa kỳ đã được cập nhật",
+                "Điểm ĐGKK học kỳ II đã được nhập đầy đủ. Vui lòng kiểm tra trên ứng dụng.",
+                NotificationCategory.grade, NotificationTargetType.classroom, classroom.getId(), admin));
+        Notification n3 = notificationRepository.save(Notification.create(
+                "Thông báo lịch thi học kỳ II",
+                "Lịch thi học kỳ II năm học 2025-2026: Toán ngày 25/06, Ngữ Văn ngày 26/06, Tiếng Anh ngày 27/06.",
+                NotificationCategory.study, NotificationTargetType.all, null, admin));
+        Notification n4 = notificationRepository.save(Notification.create(
+                "Họp phụ huynh cuối năm",
+                "Trường tổ chức họp phụ huynh tổng kết năm học vào ngày 28/06/2026 lúc 8:00 sáng tại hội trường.",
+                NotificationCategory.event, NotificationTargetType.all, null, admin));
+
+        // Send to student and parent
+        List<User> recipients = List.of(student, parent);
+        for (Notification n : List.of(n1, n2, n3, n4)) {
+            for (User u : recipients) {
+                notificationRecipientRepository.save(NotificationRecipient.create(n, u));
+            }
+        }
+
+        log.info("Dev seed: all data created (users, academic structure, timetable, grades, attendance, notifications)");
     }
 
     private void seedAttendance(Student student, List<Lesson> lessons, AttendanceStatus[] statuses) {
