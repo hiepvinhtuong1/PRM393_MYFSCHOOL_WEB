@@ -33,11 +33,17 @@ public class AttendanceRecord extends BaseEntity {
     @Column(name = "recorded_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime recordedAt;
 
-    public static AttendanceRecord create(Student student, Lesson lesson, AttendanceStatus status) {
+    public static AttendanceRecord create(Student student, Lesson lesson, AttendanceStatus status, String note) {
         AttendanceRecord ar = new AttendanceRecord();
         ar.student = student;
         ar.lesson = lesson;
         ar.status = status;
+        ar.note = note;
         return ar;
+    }
+
+    public void update(AttendanceStatus status, String note) {
+        this.status = status;
+        this.note = note;
     }
 }

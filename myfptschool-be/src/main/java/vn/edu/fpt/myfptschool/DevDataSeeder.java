@@ -254,7 +254,7 @@ public class DevDataSeeder implements CommandLineRunner {
 
     private void seedAttendance(Student student, List<Lesson> lessons, AttendanceStatus[] statuses) {
         for (int i = 0; i < lessons.size() && i < statuses.length; i++) {
-            attendanceRecordRepository.save(AttendanceRecord.create(student, lessons.get(i), statuses[i]));
+            attendanceRecordRepository.save(AttendanceRecord.create(student, lessons.get(i), statuses[i], null));
         }
     }
 

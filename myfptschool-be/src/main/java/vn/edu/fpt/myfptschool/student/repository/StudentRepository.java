@@ -9,6 +9,7 @@ import vn.edu.fpt.myfptschool.academic.entity.Classroom;
 import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.student.entity.Student;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
@@ -17,6 +18,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByUserWithClassroom(@Param("user") User user);
 
     Page<Student> findByClassroomOrderByFullName(Classroom classroom, Pageable pageable);
+
+    List<Student> findByClassroomOrderByFullName(Classroom classroom);
 
     long countByClassroom(Classroom classroom);
 
