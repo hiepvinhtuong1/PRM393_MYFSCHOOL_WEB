@@ -24,7 +24,12 @@ import vn.edu.fpt.myfptschool.timetable.entity.TimeSlot;
 import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
 import vn.edu.fpt.myfptschool.timetable.repository.RoomRepository;
 import vn.edu.fpt.myfptschool.timetable.repository.TimeSlotRepository;
+import vn.edu.fpt.myfptschool.grade.entity.GradeRecord;
+import vn.edu.fpt.myfptschool.grade.entity.ScoreComponent;
+import vn.edu.fpt.myfptschool.grade.repository.GradeRecordRepository;
+import vn.edu.fpt.myfptschool.grade.repository.ScoreComponentRepository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -48,6 +53,8 @@ public class DevDataSeeder implements CommandLineRunner {
     private final TimeSlotRepository timeSlotRepository;
     private final RoomRepository roomRepository;
     private final LessonRepository lessonRepository;
+    private final ScoreComponentRepository scoreComponentRepository;
+    private final GradeRecordRepository gradeRecordRepository;
 
     @Override
     @Transactional
@@ -85,10 +92,10 @@ public class DevDataSeeder implements CommandLineRunner {
                 Teacher.create(teacher, "Nguyễn Văn A", "a.nguyen@fpt.edu.vn", campus));
 
         // --- Subjects ---
-        Subject toan   = subjectRepository.save(Subject.create("Toán",       "#F97316"));
-        Subject van    = subjectRepository.save(Subject.create("Ngữ Văn",    "#3B82F6"));
-        Subject anh    = subjectRepository.save(Subject.create("Tiếng Anh",  "#3B82F6"));
-        Subject vatly  = subjectRepository.save(Subject.create("Vật Lý",     "#22C55E"));
+        Subject toan   = subjectRepository.save(Subject.create("Toán",       "#F97316", 2));
+        Subject van    = subjectRepository.save(Subject.create("Ngữ Văn",    "#3B82F6", 2));
+        Subject anh    = subjectRepository.save(Subject.create("Tiếng Anh",  "#3B82F6", 1));
+        Subject vatly  = subjectRepository.save(Subject.create("Vật Lý",     "#22C55E", 1));
 
         // --- ClassroomSubjects ---
         ClassroomSubject csToan  = classroomSubjectRepository.save(ClassroomSubject.create(classroom, toan,  teacherProfile, semester));
@@ -132,7 +139,45 @@ public class DevDataSeeder implements CommandLineRunner {
                 Lesson.create(csToan,  LocalDate.of(2026, 6, 12), slot5, slot5, room201)
         ));
 
-        log.info("Dev seed: all data created (users, academic structure, timetable for week 2026-06-08~12)");
+        // --- Grade records (HK II 2025-2026, chưa có DCK) ---
+        ScoreComponent tx1  = comp("TX1");
+        ScoreComponent tx2  = comp("TX2");
+        ScoreComponent tx3  = comp("TX3");
+        ScoreComponent dgkk = comp("DGKK");
+
+        gradeRecordRepository.saveAll(List.of(
+            // Toán
+            GradeRecord.create(studentProfile, csToan, tx1,  bd(8.0)),
+            GradeRecord.create(studentProfile, csToan, tx2,  bd(7.5)),
+            GradeRecord.create(studentProfile, csToan, tx3,  bd(9.0)),
+            GradeRecord.create(studentProfile, csToan, dgkk, bd(8.5)),
+            // Ngữ Văn
+            GradeRecord.create(studentProfile, csVan, tx1,  bd(7.0)),
+            GradeRecord.create(studentProfile, csVan, tx2,  bd(7.5)),
+            GradeRecord.create(studentProfile, csVan, tx3,  bd(8.0)),
+            GradeRecord.create(studentProfile, csVan, dgkk, bd(7.5)),
+            // Tiếng Anh
+            GradeRecord.create(studentProfile, csAnh, tx1,  bd(9.0)),
+            GradeRecord.create(studentProfile, csAnh, tx2,  bd(8.5)),
+            GradeRecord.create(studentProfile, csAnh, tx3,  bd(9.5)),
+            GradeRecord.create(studentProfile, csAnh, dgkk, bd(9.0)),
+            // Vật Lý
+            GradeRecord.create(studentProfile, csVatly, tx1,  bd(6.5)),
+            GradeRecord.create(studentProfile, csVatly, tx2,  bd(7.0)),
+            GradeRecord.create(studentProfile, csVatly, tx3,  bd(6.0)),
+            GradeRecord.create(studentProfile, csVatly, dgkk, bd(6.5))
+        ));
+
+        log.info("Dev seed: all data created (users, academic structure, timetable, grades)");
+    }
+
+    private ScoreComponent comp(String code) {
+        return scoreComponentRepository.findByCode(code)
+                .orElseThrow(() -> new IllegalStateException("ScoreComponent " + code + " not found — V2 migration not applied?"));
+    }
+
+    private static BigDecimal bd(double value) {
+        return BigDecimal.valueOf(value);
     }
 
     private TimeSlot slot(int number) {
