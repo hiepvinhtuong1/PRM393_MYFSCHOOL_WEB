@@ -27,8 +27,10 @@ public class AdminTeacherService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public TeacherPageResponse getAllTeachers(int page, int size) {
-        Page<Teacher> result = teacherRepository.findAll(PageRequest.of(page, size));
+    public TeacherPageResponse getAllTeachers(String search, int page, int size) {
+        Page<Teacher> result = (search != null && !search.isBlank())
+                ? teacherRepository.findByFullNameContainingIgnoreCase(search, PageRequest.of(page, size))
+                : teacherRepository.findAll(PageRequest.of(page, size));
         return new TeacherPageResponse(
                 result.getContent().stream().map(TeacherResponse::from).toList(),
                 result.getNumber(),

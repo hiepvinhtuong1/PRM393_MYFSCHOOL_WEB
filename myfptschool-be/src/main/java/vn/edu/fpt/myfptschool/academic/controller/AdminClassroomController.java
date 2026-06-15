@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.fpt.myfptschool.academic.dto.CampusResponse;
 import vn.edu.fpt.myfptschool.academic.dto.ClassroomResponse;
 import vn.edu.fpt.myfptschool.academic.service.AdminClassroomService;
 import vn.edu.fpt.myfptschool.student.dto.StudentSummaryResponse;
@@ -22,6 +23,13 @@ import java.util.List;
 public class AdminClassroomController {
 
     private final AdminClassroomService adminClassroomService;
+
+    @GetMapping("/campuses")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "List all campuses (for dropdowns)")
+    public ResponseEntity<List<CampusResponse>> getAllCampuses() {
+        return ResponseEntity.ok(adminClassroomService.getAllCampuses());
+    }
 
     @GetMapping("/classrooms")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")

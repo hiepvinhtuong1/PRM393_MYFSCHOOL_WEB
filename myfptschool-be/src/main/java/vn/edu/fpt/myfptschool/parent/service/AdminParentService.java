@@ -1,6 +1,8 @@
 package vn.edu.fpt.myfptschool.parent.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,20 @@ public class AdminParentService {
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public ParentPageResponse getAllParents(String search, int page, int size) {
+        Page<Parent> result = (search != null && !search.isBlank())
+                ? parentRepository.findByFullNameContainingIgnoreCase(search, PageRequest.of(page, size))
+                : parentRepository.findAll(PageRequest.of(page, size));
+        return new ParentPageResponse(
+                result.getContent().stream().map(ParentResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
+    }
 
     @Transactional
     public ParentResponse createParent(CreateParentRequest req) {
