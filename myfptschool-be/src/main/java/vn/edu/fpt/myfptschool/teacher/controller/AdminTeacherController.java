@@ -22,12 +22,13 @@ public class AdminTeacherController {
 
     @GetMapping("/teachers")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    @Operation(summary = "Get paginated teacher list")
+    @Operation(summary = "Get paginated teacher list with optional name search")
     public ResponseEntity<TeacherPageResponse> getAllTeachers(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return ResponseEntity.ok(adminTeacherService.getAllTeachers(page, size));
+        return ResponseEntity.ok(adminTeacherService.getAllTeachers(search, page, size));
     }
 
     @PostMapping("/teachers")

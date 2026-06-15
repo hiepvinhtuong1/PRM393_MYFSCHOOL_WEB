@@ -5,8 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.fpt.myfptschool.academic.dto.CampusResponse;
 import vn.edu.fpt.myfptschool.academic.dto.ClassroomResponse;
 import vn.edu.fpt.myfptschool.academic.entity.Classroom;
+import vn.edu.fpt.myfptschool.academic.repository.CampusRepository;
 import vn.edu.fpt.myfptschool.academic.repository.ClassroomRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
@@ -21,6 +23,12 @@ public class AdminClassroomService {
 
     private final ClassroomRepository classroomRepository;
     private final StudentRepository studentRepository;
+    private final CampusRepository campusRepository;
+
+    @Transactional(readOnly = true)
+    public List<CampusResponse> getAllCampuses() {
+        return campusRepository.findAll().stream().map(CampusResponse::from).toList();
+    }
 
     @Transactional(readOnly = true)
     public List<ClassroomResponse> getAllClassrooms() {

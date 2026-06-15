@@ -14,6 +14,9 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     Page<Teacher> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = {"campus", "user"})
+    Page<Teacher> findByFullNameContainingIgnoreCase(String name, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"campus", "user"})
     Optional<Teacher> findById(Long id);
 
     boolean existsByUserId(Long userId);

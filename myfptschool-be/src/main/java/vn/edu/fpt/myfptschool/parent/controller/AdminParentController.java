@@ -20,6 +20,17 @@ public class AdminParentController {
 
     private final AdminParentService adminParentService;
 
+    @GetMapping("/parents")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Get paginated parent list with optional name search")
+    public ResponseEntity<vn.edu.fpt.myfptschool.parent.dto.ParentPageResponse> getAllParents(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(adminParentService.getAllParents(search, page, size));
+    }
+
     @PostMapping("/parents")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new parent (also creates login account)")
