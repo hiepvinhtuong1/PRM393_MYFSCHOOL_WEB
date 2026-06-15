@@ -10,6 +10,7 @@ import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.timetable.dto.AdminLessonResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.CreateLessonRequest;
 import vn.edu.fpt.myfptschool.timetable.dto.RoomResponse;
+import vn.edu.fpt.myfptschool.timetable.dto.TimeSlotResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.UpdateLessonRequest;
 import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
 import vn.edu.fpt.myfptschool.timetable.entity.Room;
@@ -91,5 +92,12 @@ public class AdminLessonService {
     @Transactional(readOnly = true)
     public List<RoomResponse> getRooms() {
         return roomRepository.findAll().stream().map(RoomResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TimeSlotResponse> getTimeSlots() {
+        return timeSlotRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(vn.edu.fpt.myfptschool.timetable.entity.TimeSlot::getSlotNumber))
+                .map(TimeSlotResponse::from).toList();
     }
 }
