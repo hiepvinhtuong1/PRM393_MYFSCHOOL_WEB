@@ -14,6 +14,7 @@ import vn.edu.fpt.myfptschool.student.repository.StudentRepository;
 import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
 import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,10 @@ public class AdminAttendanceService {
     public void submitAttendance(Long lessonId, SubmitAttendanceRequest request) {
         Lesson lesson = lessonRepository.findByIdWithDetails(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Tiết học không tồn tại"));
+
+        if (lesson.getLessonDate().isAfter(LocalDate.now())) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Không thể điểm danh tiết học chưa diễn ra");
+        }
 
         var classroom = lesson.getClassroomSubject().getClassroom();
         List<Student> students = studentRepository.findByClassroomOrderByFullName(classroom);

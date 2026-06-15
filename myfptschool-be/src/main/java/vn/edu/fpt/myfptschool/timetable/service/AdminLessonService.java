@@ -14,6 +14,7 @@ import vn.edu.fpt.myfptschool.timetable.dto.RoomResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.TimeSlotResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.UpdateLessonRequest;
 import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
+import vn.edu.fpt.myfptschool.timetable.entity.LessonStatus;
 import vn.edu.fpt.myfptschool.timetable.entity.Room;
 import vn.edu.fpt.myfptschool.timetable.entity.TimeSlot;
 import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
@@ -56,6 +57,12 @@ public class AdminLessonService {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "Ngày không hợp lệ: " + request.lessonDate());
         }
 
+        var semester = cs.getSemester();
+        if (date.isBefore(semester.getStartDate()) || date.isAfter(semester.getEndDate())) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED,
+                    "Ngày học phải trong học kỳ (" + semester.getStartDate() + " – " + semester.getEndDate() + ")");
+        }
+
         TimeSlot startSlot = timeSlotRepository.findById(request.startSlotId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Tiết bắt đầu không tồn tại"));
         TimeSlot endSlot = timeSlotRepository.findById(request.endSlotId())
@@ -63,6 +70,16 @@ public class AdminLessonService {
 
         if (endSlot.getSlotNumber() < startSlot.getSlotNumber()) {
             throw new AppException(ErrorCode.VALIDATION_FAILED, "Tiết kết thúc phải >= tiết bắt đầu");
+        }
+
+        List<Lesson> existingLessons = lessonRepository.findByClassroomAndDate(cs.getClassroom(), date);
+        for (Lesson existing : existingLessons) {
+            if (existing.getStatus() != LessonStatus.cancelled
+                    && existing.getStartSlot().getSlotNumber() <= endSlot.getSlotNumber()
+                    && existing.getEndSlot().getSlotNumber() >= startSlot.getSlotNumber()) {
+                throw new AppException(ErrorCode.VALIDATION_FAILED,
+                        "Lớp đã có tiết học trong khung giờ này ngày " + request.lessonDate());
+            }
         }
 
         Room room = null;

@@ -8,7 +8,7 @@ import vn.edu.fpt.myfptschool.notification.entity.NotificationTargetType;
 
 public record SendNotificationRequest(
         @NotBlank @Size(max = 200) String title,
-        @NotBlank String body,
+        @NotBlank @Size(min = 1, max = 5000) String body,
         @NotNull NotificationCategory category,
         @NotNull NotificationTargetType targetType,
         Long targetId

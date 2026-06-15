@@ -80,6 +80,13 @@ public class AdminGradeService {
         List<GradeRecord> toSave = new ArrayList<>();
 
         for (UpsertGradeEntryRequest entry : request.entries()) {
+            if (entry.score() != null) {
+                BigDecimal remainder = entry.score().remainder(new BigDecimal("0.25"));
+                if (remainder.compareTo(BigDecimal.ZERO) != 0) {
+                    throw new AppException(ErrorCode.VALIDATION_FAILED, "Điểm phải là bội số của 0.25");
+                }
+            }
+
             Student student = studentMap.get(entry.studentId());
             if (student == null) {
                 throw new AppException(ErrorCode.NOT_FOUND,
@@ -109,6 +116,12 @@ public class AdminGradeService {
 
     @Transactional
     public void updateGrade(Long gradeRecordId, UpdateGradeRequest request) {
+        if (request.score() != null) {
+            BigDecimal remainder = request.score().remainder(new BigDecimal("0.25"));
+            if (remainder.compareTo(BigDecimal.ZERO) != 0) {
+                throw new AppException(ErrorCode.VALIDATION_FAILED, "Điểm phải là bội số của 0.25");
+            }
+        }
         GradeRecord record = gradeRecordRepository.findById(gradeRecordId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Bản ghi điểm không tồn tại"));
         record.update(request.score());
