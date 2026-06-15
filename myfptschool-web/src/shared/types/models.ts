@@ -7,6 +7,11 @@ export interface AuthUser {
   fullName: string
 }
 
+export interface Campus {
+  id: number
+  name: string
+}
+
 export interface Classroom {
   id: number
   name: string
@@ -35,10 +40,41 @@ export interface Teacher {
   id: number
   fullName: string
   phone: string | null
-  email: string
-  campusName: string
-  username: string
-  active: boolean
+  email: string | null
+  campusId: number | null
+  campusName: string | null
+  username: string | null
+  active?: boolean
+}
+
+export interface Parent {
+  id: number
+  parentCode: string
+  fullName: string
+  dateOfBirth: string | null
+  gender: string | null
+  phone: string | null
+  email: string | null
+  username: string | null
+  children: StudentSummary[]
+}
+
+export interface StudentSummary {
+  id: number
+  studentCode: string
+  fullName: string
+  dateOfBirth: string | null
+  gender: string | null
+  phone: string | null
+  email: string | null
+  photoUrl: string | null
+}
+
+export interface Subject {
+  id: number
+  name: string
+  colorHex: string | null
+  coefficient: number
 }
 
 export interface Semester {
@@ -61,6 +97,22 @@ export interface ClassroomSubject {
   teacherName: string
   semesterId: number
   semesterName: string
+}
+
+export interface TimeSlot {
+  id: number
+  slotNumber: number
+  startTime: string
+  endTime: string
+}
+
+export interface Notification {
+  id: number
+  title: string
+  body: string
+  category: string
+  isRead: boolean
+  createdAt: string
 }
 
 export type AttendanceStatus = 'present' | 'late' | 'excused_absent' | 'unexcused_absent'

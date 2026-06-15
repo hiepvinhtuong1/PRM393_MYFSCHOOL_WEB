@@ -3,13 +3,14 @@ import { cn } from '@/shared/lib/utils'
 import { useAuth } from '@/shared/hooks/useAuth'
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen,
-  CalendarDays, ClipboardList, BarChart3, Bell, LogOut,
+  CalendarDays, ClipboardList, BarChart3, Bell, LogOut, UserCheck,
 } from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { group: 'Học vụ' },
   { label: 'Học sinh', to: '/students', icon: Users },
+  { label: 'Phụ huynh', to: '/parents', icon: UserCheck, adminOnly: true },
   { label: 'Giáo viên', to: '/teachers', icon: GraduationCap, adminOnly: true },
   { label: 'Lớp học', to: '/classrooms', icon: School },
   { group: 'Giảng dạy' },

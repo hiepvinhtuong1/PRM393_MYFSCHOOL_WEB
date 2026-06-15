@@ -1,4 +1,7 @@
 export const queryKeys = {
+  campuses: {
+    list: () => ['campuses'] as const,
+  },
   classrooms: {
     all: ['classrooms'] as const,
     list: () => ['classrooms', 'list'] as const,
@@ -10,9 +13,17 @@ export const queryKeys = {
   },
   teachers: {
     list: (params: object) => ['teachers', 'list', params] as const,
+    detail: (id: number) => ['teachers', id] as const,
+  },
+  parents: {
+    list: (params: object) => ['parents', 'list', params] as const,
+    detail: (id: number) => ['parents', id] as const,
   },
   semesters: {
     list: () => ['semesters'] as const,
+  },
+  subjects: {
+    list: () => ['subjects'] as const,
   },
   classroomSubjects: {
     list: (params: object) => ['classroom-subjects', 'list', params] as const,
@@ -24,5 +35,11 @@ export const queryKeys = {
   },
   rooms: {
     list: () => ['rooms'] as const,
+  },
+  timeSlots: {
+    list: () => ['time-slots'] as const,
+  },
+  notifications: {
+    list: (params: object) => ['notifications', 'list', params] as const,
   },
 }
