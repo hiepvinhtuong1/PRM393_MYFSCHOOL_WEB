@@ -8,10 +8,14 @@ import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
+import vn.edu.fpt.myfptschool.academic.repository.SemesterRepository;
 import vn.edu.fpt.myfptschool.me.dto.ParentProfileResponse;
+import vn.edu.fpt.myfptschool.me.dto.SemesterResponse;
 import vn.edu.fpt.myfptschool.me.dto.StudentProfileResponse;
 import vn.edu.fpt.myfptschool.parent.repository.ParentRepository;
 import vn.edu.fpt.myfptschool.student.repository.StudentRepository;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,6 +25,7 @@ public class MeService {
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
+    private final SemesterRepository semesterRepository;
 
     @Transactional(readOnly = true)
     public Object getProfile(String username) {
@@ -48,5 +53,12 @@ public class MeService {
             }
             default -> throw new AppException(ErrorCode.NOT_FOUND);
         };
+    }
+
+    @Transactional(readOnly = true)
+    public List<SemesterResponse> getSemesters() {
+        return semesterRepository.findAllWithAcademicYear().stream()
+                .map(SemesterResponse::from)
+                .toList();
     }
 }
