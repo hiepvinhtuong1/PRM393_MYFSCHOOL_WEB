@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.fpt.myfptschool.timetable.dto.AdminLessonResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.CreateLessonRequest;
 import vn.edu.fpt.myfptschool.timetable.dto.RoomResponse;
+import vn.edu.fpt.myfptschool.timetable.dto.TimeSlotResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.UpdateLessonRequest;
 import vn.edu.fpt.myfptschool.timetable.service.AdminLessonService;
 
@@ -56,5 +57,12 @@ public class AdminLessonController {
     @Operation(summary = "Danh sách phòng học")
     public ResponseEntity<List<RoomResponse>> getRooms() {
         return ResponseEntity.ok(adminLessonService.getRooms());
+    }
+
+    @GetMapping("/api/v1/admin/time-slots")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Danh sách tiết (slot) trong ngày")
+    public ResponseEntity<List<TimeSlotResponse>> getTimeSlots() {
+        return ResponseEntity.ok(adminLessonService.getTimeSlots());
     }
 }
