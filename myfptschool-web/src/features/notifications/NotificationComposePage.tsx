@@ -10,7 +10,6 @@ import { Input } from '@/shared/components/ui/Input'
 import { Select } from '@/shared/components/ui/Select'
 import { Button } from '@/shared/components/ui/Button'
 import type { Classroom } from '@/shared/types/models'
-import type { PageResponse } from '@/shared/types/api'
 
 const schema = z.object({
   targetType: z.enum(['individual', 'classroom', 'all']),
@@ -34,7 +33,7 @@ export function NotificationComposePage() {
 
   const { data: classrooms } = useQuery({
     queryKey: queryKeys.classrooms.list(),
-    queryFn: () => apiGet<PageResponse<Classroom>>('/admin/classrooms', { size: 100 }),
+    queryFn: () => apiGet<Classroom[]>('/admin/classrooms'),
     enabled: targetType === 'classroom',
   })
 
@@ -66,7 +65,7 @@ export function NotificationComposePage() {
           {targetType === 'classroom' && (
             <Select label="Chọn lớp" error={errors.targetId?.message} {...register('targetId')}>
               <option value="">-- Chọn lớp --</option>
-              {classrooms?.content.map((cl) => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
+              {classrooms?.map((cl) => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
             </Select>
           )}
           {targetType === 'individual' && (
