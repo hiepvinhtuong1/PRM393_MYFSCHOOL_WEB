@@ -48,4 +48,21 @@ export async function apiDelete(url: string): Promise<void> {
   await api.delete(url)
 }
 
+export async function apiDownload(url: string, filename: string): Promise<void> {
+  const res = await api.get(url, { responseType: 'blob' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(new Blob([res.data]))
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
+export async function apiUpload<T>(url: string, formData: FormData): Promise<T> {
+  const res = await api.post<ApiResponse<T>>(url, formData, {
+    headers: { 'Content-Type': undefined },
+    validateStatus: (s) => s < 500,
+  })
+  return res.data.data
+}
+
 export default api
