@@ -164,6 +164,16 @@ public class AdminStudentService {
         try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = wb.getSheetAt(0);
 
+            int totalDataRows = 0;
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row r = sheet.getRow(i);
+                if (r != null && !isRowEmpty(r)) totalDataRows++;
+            }
+            if (totalDataRows > 500) {
+                throw new AppException(ErrorCode.VALIDATION_FAILED,
+                        "File không được vượt quá 500 học sinh (hiện có " + totalDataRows + " dòng dữ liệu)");
+            }
+
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null || isRowEmpty(row)) continue;
