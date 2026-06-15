@@ -12,6 +12,7 @@ import vn.edu.fpt.myfptschool.student.entity.Student;
 import java.util.List;
 import java.util.Optional;
 
+
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
     @Query("SELECT s FROM Student s LEFT JOIN FETCH s.classroom cl LEFT JOIN FETCH cl.campus WHERE s.user = :user")
@@ -27,4 +28,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     @Query("SELECT s FROM Student s LEFT JOIN FETCH s.classroom cl LEFT JOIN FETCH cl.campus WHERE s.id = :id")
     Optional<Student> findByIdWithClassroom(@Param("id") Long id);
+
+    @Query("SELECT s.user FROM Student s WHERE s.classroom = :classroom")
+    List<User> findUsersByClassroom(@Param("classroom") Classroom classroom);
 }
