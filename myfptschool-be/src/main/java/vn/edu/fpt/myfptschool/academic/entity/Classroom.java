@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import vn.edu.fpt.myfptschool.common.entity.BaseEntity;
+import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
 
 @Entity
 @Table(name = "classrooms")
@@ -25,6 +26,14 @@ public class Classroom extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academic_year_id", nullable = false)
     private AcademicYear academicYear;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "homeroom_teacher_id")
+    private Teacher homeroomTeacher;
+
+    public void assignHomeroomTeacher(Teacher teacher) {
+        this.homeroomTeacher = teacher;
+    }
 
     public static Classroom create(String name, Short gradeLevel, Campus campus, AcademicYear academicYear) {
         Classroom cl = new Classroom();
