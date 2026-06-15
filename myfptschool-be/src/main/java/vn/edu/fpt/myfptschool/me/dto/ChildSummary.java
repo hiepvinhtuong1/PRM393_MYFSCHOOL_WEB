@@ -8,12 +8,14 @@ import vn.edu.fpt.myfptschool.student.entity.Student;
 @Builder
 public class ChildSummary {
 
+    private Long id;
     private String studentCode;
     private String fullName;
     private String classroomName;
 
     public static ChildSummary from(Student student) {
         return ChildSummary.builder()
+                .id(student.getId())
                 .studentCode(student.getStudentCode())
                 .fullName(student.getFullName())
                 .classroomName(student.getClassroom() != null ? student.getClassroom().getName() : null)
