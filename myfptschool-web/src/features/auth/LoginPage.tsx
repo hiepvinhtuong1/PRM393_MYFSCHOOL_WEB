@@ -28,7 +28,7 @@ export function LoginPage() {
     setError('')
     try {
       const res = await loginApi(data)
-      login(res.accessToken, res.user)
+      login(res.accessToken, res.refreshToken, res.user)
       navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
       const msg =
