@@ -11,7 +11,10 @@ import { ParentListPage } from '@/features/parents/ParentListPage'
 import { ParentFormPage } from '@/features/parents/ParentFormPage'
 import { ClassroomListPage } from '@/features/classrooms/ClassroomListPage'
 import { AssignmentPage } from '@/features/academic/AssignmentPage'
+import { SemesterListPage } from '@/features/academic/SemesterListPage'
+import { SubjectListPage } from '@/features/academic/SubjectListPage'
 import { TimetablePage } from '@/features/timetable/TimetablePage'
+import { RoomListPage } from '@/features/timetable/RoomListPage'
 import { AttendancePage } from '@/features/attendance/AttendancePage'
 import { GradesPage } from '@/features/grades/GradesPage'
 import { NotificationListPage } from '@/features/notifications/NotificationListPage'
@@ -38,6 +41,9 @@ export const router = createBrowserRouter([
           { path: '/parents/:id/edit', element: <ParentFormPage /> },
           { path: '/classrooms', element: <ClassroomListPage /> },
           { path: '/assignments', element: <AssignmentPage /> },
+          { path: '/semesters', element: <SemesterListPage /> },
+          { path: '/subjects', element: <SubjectListPage /> },
+          { path: '/rooms', element: <RoomListPage /> },
           { path: '/timetable', element: <TimetablePage /> },
           { path: '/attendance', element: <AttendancePage /> },
           { path: '/grades', element: <GradesPage /> },

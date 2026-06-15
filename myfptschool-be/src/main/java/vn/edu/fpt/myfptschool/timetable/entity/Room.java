@@ -26,4 +26,9 @@ public class Room extends BaseEntity {
         r.campus = campus;
         return r;
     }
+
+    public void update(String code, Campus campus) {
+        this.code = code;
+        this.campus = campus;
+    }
 }

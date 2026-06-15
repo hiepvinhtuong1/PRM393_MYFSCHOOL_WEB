@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost, apiPut } from '@/shared/lib/api'
+import { apiDelete, apiGet, apiPost, apiPut } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
@@ -91,6 +91,11 @@ export function ParentFormPage() {
     },
   })
 
+  const unlinkMutation = useMutation({
+    mutationFn: (studentId: number) => apiDelete(`/admin/parents/${id}/students/${studentId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.detail(Number(id)) }),
+  })
+
   return (
     <div>
       <PageHeader title={isEdit ? 'Sửa phụ huynh' : 'Thêm phụ huynh'} />
@@ -133,11 +138,20 @@ export function ParentFormPage() {
           <div className="bg-white rounded-xl border border-border-light p-6 shadow-sm space-y-4">
             <h2 className="font-semibold text-text-primary">Con em đã liên kết</h2>
             {parent?.children.length
-              ? <ul className="space-y-1">
+              ? <ul className="space-y-1.5">
                   {parent.children.map((c) => (
-                    <li key={c.id} className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-brand-green" />
-                      {c.fullName} <span className="text-text-tertiary text-xs">({c.studentCode})</span>
+                    <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-brand-green" />
+                        {c.fullName} <span className="text-text-tertiary text-xs">({c.studentCode})</span>
+                      </span>
+                      <button
+                        onClick={() => { if (confirm(`Gỡ liên kết với ${c.fullName}?`)) unlinkMutation.mutate(c.id) }}
+                        disabled={unlinkMutation.isPending}
+                        className="text-xs text-status-danger hover:underline disabled:opacity-50"
+                      >
+                        Gỡ
+                      </button>
                     </li>
                   ))}
                 </ul>

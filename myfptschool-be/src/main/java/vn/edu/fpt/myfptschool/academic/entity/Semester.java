@@ -35,4 +35,11 @@ public class Semester extends BaseEntity {
         s.endDate = endDate;
         return s;
     }
+
+    public void update(AcademicYear academicYear, String name, LocalDate startDate, LocalDate endDate) {
+        this.academicYear = academicYear;
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 }

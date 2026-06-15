@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
-import { apiGet } from '@/shared/lib/api'
+import { apiGet, apiPatch } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
@@ -14,10 +14,16 @@ export function ParentListPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const params = { search: search || undefined, page, size: 20 }
+  const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.parents.list(params),
     queryFn: () => apiGet<PageResponse<Parent>>('/admin/parents', params),
+  })
+
+  const toggleStatus = useMutation({
+    mutationFn: (id: number) => apiPatch(`/admin/parents/${id}/status`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.list({}) }),
   })
 
   return (
@@ -45,21 +51,30 @@ export function ParentListPage() {
           <table className="w-full text-sm">
             <thead className="bg-surface-elevated">
               <tr>
-                {['CCCD/CMND', 'Họ tên', 'Giới tính', 'SĐT', 'Tài khoản', 'Con em', ''].map((h) => (
+                {['CCCD/CMND', 'Họ tên', 'Giới tính', 'SĐT', 'Tài khoản', 'Trạng thái', 'Con em', ''].map((h) => (
                   <th key={h} className="px-4 py-3 text-left font-semibold text-text-secondary text-xs uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-border-light">
-              {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-text-tertiary">Đang tải...</td></tr>}
-              {!isLoading && !data?.content.length && <tr><td colSpan={7} className="px-4 py-8 text-center text-text-tertiary">Không có dữ liệu</td></tr>}
+              {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-text-tertiary">Đang tải...</td></tr>}
+              {!isLoading && !data?.content.length && <tr><td colSpan={8} className="px-4 py-8 text-center text-text-tertiary">Không có dữ liệu</td></tr>}
               {data?.content.map((p) => (
-                <tr key={p.id} className="hover:bg-surface-bg transition-colors">
+                <tr key={p.id} className={`hover:bg-surface-bg transition-colors ${!p.active ? 'opacity-60' : ''}`}>
                   <td className="px-4 py-3 font-mono text-xs">{p.parentCode}</td>
                   <td className="px-4 py-3 font-medium">{p.fullName}</td>
                   <td className="px-4 py-3">{p.gender ?? '—'}</td>
                   <td className="px-4 py-3">{p.phone ?? '—'}</td>
                   <td className="px-4 py-3 font-mono text-xs">{p.username ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => toggleStatus.mutate(p.id)}
+                      disabled={toggleStatus.isPending}
+                      className={`text-xs px-2 py-0.5 rounded-full border font-medium transition-colors ${p.active ? 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100' : 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                    >
+                      {p.active ? 'Hoạt động' : 'Đã khóa'}
+                    </button>
+                  </td>
                   <td className="px-4 py-3">
                     {p.children.length > 0
                       ? p.children.map((c) => (

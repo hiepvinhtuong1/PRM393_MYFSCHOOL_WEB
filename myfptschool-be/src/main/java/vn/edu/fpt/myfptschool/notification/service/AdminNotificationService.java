@@ -1,6 +1,8 @@
 package vn.edu.fpt.myfptschool.notification.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.academic.entity.Classroom;
@@ -11,6 +13,7 @@ import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.notification.dto.SendNotificationRequest;
 import vn.edu.fpt.myfptschool.notification.dto.SendNotificationResponse;
+import vn.edu.fpt.myfptschool.notification.dto.SentNotificationResponse;
 import vn.edu.fpt.myfptschool.notification.entity.Notification;
 import vn.edu.fpt.myfptschool.notification.entity.NotificationRecipient;
 import vn.edu.fpt.myfptschool.notification.entity.NotificationTargetType;
@@ -81,5 +84,13 @@ public class AdminNotificationService {
             }
             case all -> userRepository.findAll();
         };
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SentNotificationResponse> getSent(String username, int page, int size) {
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Page<Notification> notifications = notificationRepository.findBySender(sender, PageRequest.of(page, size));
+        return notifications.map(n -> SentNotificationResponse.from(n, notificationRepository.countRecipients(n)));
     }
 }

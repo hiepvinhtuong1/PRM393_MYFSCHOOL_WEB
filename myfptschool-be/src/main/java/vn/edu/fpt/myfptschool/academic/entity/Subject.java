@@ -31,4 +31,10 @@ public class Subject extends BaseEntity {
         s.coefficient = (short) coefficient;
         return s;
     }
+
+    public void update(String name, String colorHex, int coefficient) {
+        this.name = name;
+        this.colorHex = colorHex;
+        this.coefficient = (short) coefficient;
+    }
 }
