@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Users, GraduationCap, School, BookOpen } from 'lucide-react'
+import { Users, GraduationCap, School, BookOpen, ClipboardList } from 'lucide-react'
 import { useAuth } from '@/shared/hooks/useAuth'
 import { apiGet } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import type { PageResponse } from '@/shared/types/api'
-import type { Classroom, Student, Teacher, Subject } from '@/shared/types/models'
+import type { Classroom, ClassroomSubject, Student, Teacher, Subject } from '@/shared/types/models'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -26,12 +26,17 @@ export function DashboardPage() {
     queryKey: queryKeys.subjects.list(),
     queryFn: () => apiGet<Subject[]>('/admin/subjects'),
   })
+  const { data: assignments } = useQuery({
+    queryKey: queryKeys.classroomSubjects.list({ size: 1 }),
+    queryFn: () => apiGet<PageResponse<ClassroomSubject>>('/admin/classroom-subjects', { size: 1 }),
+  })
 
   const stats = [
     { label: 'Học sinh', value: students?.totalElements ?? '—', icon: Users, color: 'text-brand-orange', bg: 'bg-orange-50' },
     { label: 'Giáo viên', value: teachers?.totalElements ?? '—', icon: GraduationCap, color: 'text-brand-blue', bg: 'bg-blue-50' },
     { label: 'Lớp học', value: classrooms?.length ?? '—', icon: School, color: 'text-brand-green', bg: 'bg-green-50' },
     { label: 'Môn học', value: subjects?.length ?? '—', icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { label: 'Phân công', value: assignments?.totalElements ?? '—', icon: ClipboardList, color: 'text-amber-600', bg: 'bg-amber-50' },
   ]
 
   return (
@@ -41,7 +46,7 @@ export function DashboardPage() {
         subtitle={`Xin chào, ${user?.fullName ?? 'Admin'}`}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {stats.map((card) => {
           const Icon = card.icon
           return (

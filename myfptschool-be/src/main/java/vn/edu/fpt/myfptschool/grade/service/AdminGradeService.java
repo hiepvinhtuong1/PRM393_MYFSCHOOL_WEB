@@ -15,6 +15,11 @@ import vn.edu.fpt.myfptschool.grade.repository.ScoreComponentRepository;
 import vn.edu.fpt.myfptschool.student.entity.Student;
 import vn.edu.fpt.myfptschool.student.repository.StudentRepository;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -132,6 +137,62 @@ public class AdminGradeService {
 
         Double average = computeAverage(txScores, midterm, finalScore);
         return new StudentGradeRow(student.getId(), student.getStudentCode(), student.getFullName(), scores, average);
+    }
+
+    public byte[] exportGradeSheet(Long classroomSubjectId) {
+        ClassroomSubjectGradeSheetResponse sheet = getGradeSheet(classroomSubjectId);
+        try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet ws = wb.createSheet("Bảng điểm");
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            Row titleRow = ws.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue(sheet.classroomName() + " — " + sheet.subjectName() + " — GV: " + sheet.teacherName());
+            titleCell.setCellStyle(headerStyle);
+
+            Row headerRow = ws.createRow(1);
+            headerRow.createCell(0).setCellValue("Mã HS");
+            headerRow.createCell(1).setCellValue("Họ tên");
+            for (int i = 0; i < sheet.components().size(); i++) {
+                ScoreComponentDto c = sheet.components().get(i);
+                Cell cell = headerRow.createCell(2 + i);
+                cell.setCellValue(c.code() + " (×" + c.weight() + ")");
+                cell.setCellStyle(headerStyle);
+            }
+            Cell avgHeader = headerRow.createCell(2 + sheet.components().size());
+            avgHeader.setCellValue("ĐTK");
+            avgHeader.setCellStyle(headerStyle);
+
+            for (int r = 0; r < sheet.students().size(); r++) {
+                StudentGradeRow row = sheet.students().get(r);
+                Row dataRow = ws.createRow(r + 2);
+                dataRow.createCell(0).setCellValue(row.studentCode());
+                dataRow.createCell(1).setCellValue(row.fullName());
+                for (int c = 0; c < sheet.components().size(); c++) {
+                    GradeEntry entry = row.scores().get(sheet.components().get(c).code());
+                    Cell cell = dataRow.createCell(2 + c);
+                    if (entry != null && entry.score() != null) {
+                        cell.setCellValue(entry.score());
+                    }
+                }
+                Cell avgCell = dataRow.createCell(2 + sheet.components().size());
+                if (row.average() != null) {
+                    avgCell.setCellValue(row.average());
+                }
+            }
+
+            for (int i = 0; i <= 2 + sheet.components().size(); i++) {
+                ws.autoSizeColumn(i);
+            }
+
+            wb.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "Lỗi xuất file Excel");
+        }
     }
 
     // DTBm = (∑TX×1 + DGKK×2 + DCK×3) / (n_TX + 2 + 3)

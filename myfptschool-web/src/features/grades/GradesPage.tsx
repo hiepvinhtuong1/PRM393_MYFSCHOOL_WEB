@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost } from '@/shared/lib/api'
+import { apiDownload, apiGet, apiPost } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Select } from '@/shared/components/ui/Select'
@@ -17,6 +17,7 @@ export function GradesPage() {
   const [semesterId, setSemesterId] = useState('')
   const [csId, setCsId] = useState('')
   const [edits, setEdits] = useState<Record<string, string>>({})
+  const [exporting, setExporting] = useState(false)
   const qc = useQueryClient()
 
   const { data: semesters } = useQuery({ queryKey: queryKeys.semesters.list(), queryFn: () => apiGet<Semester[]>('/admin/semesters') })
@@ -73,9 +74,28 @@ export function GradesPage() {
             <div className="text-sm text-text-secondary">
               {sheet.classroomName} · {sheet.subjectName} · GV: {sheet.teacherName}
             </div>
-            <Button onClick={() => save.mutate()} loading={save.isPending} disabled={Object.keys(edits).length === 0}>
-              Lưu điểm
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                loading={exporting}
+                onClick={async () => {
+                  setExporting(true)
+                  try {
+                    await apiDownload(
+                      `/admin/classroom-subjects/${csId}/grades/export`,
+                      `bangdiem_${sheet.classroomName}_${sheet.subjectName}.xlsx`,
+                    )
+                  } finally {
+                    setExporting(false)
+                  }
+                }}
+              >
+                Xuất Excel
+              </Button>
+              <Button onClick={() => save.mutate()} loading={save.isPending} disabled={Object.keys(edits).length === 0}>
+                Lưu điểm
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-border-light shadow-sm overflow-x-auto">

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.academic.entity.ClassroomSubject;
 import vn.edu.fpt.myfptschool.academic.repository.ClassroomSubjectRepository;
+import vn.edu.fpt.myfptschool.attendance.repository.AttendanceRecordRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.timetable.dto.AdminLessonResponse;
@@ -29,6 +30,7 @@ public class AdminLessonService {
 
     private final ClassroomSubjectRepository classroomSubjectRepository;
     private final LessonRepository lessonRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final RoomRepository roomRepository;
 
@@ -87,6 +89,14 @@ public class AdminLessonService {
         lesson.update(request.status(), room, request.note());
         lessonRepository.save(lesson);
         return AdminLessonResponse.from(lesson);
+    }
+
+    @Transactional
+    public void deleteLesson(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Tiết học không tồn tại"));
+        attendanceRecordRepository.deleteByLesson(lesson);
+        lessonRepository.delete(lesson);
     }
 
     @Transactional(readOnly = true)
