@@ -28,10 +28,21 @@ public class AdminStudentController {
 
     private final AdminStudentService adminStudentService;
 
+    @GetMapping("/students")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "List students with optional search and pagination")
+    public ResponseEntity<StudentPageResponse> getAllStudents(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(adminStudentService.getAllStudents(search, page, size));
+    }
+
     @PostMapping("/students")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new student (also creates login account)")
-    public ResponseEntity<StudentSummaryResponse> createStudent(
+    public ResponseEntity<StudentAdminResponse> createStudent(
             @Valid @RequestBody CreateStudentRequest request
     ) {
         return ResponseEntity.status(201).body(adminStudentService.createStudent(request));
@@ -40,7 +51,7 @@ public class AdminStudentController {
     @PutMapping("/students/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update student info")
-    public ResponseEntity<StudentSummaryResponse> updateStudent(
+    public ResponseEntity<StudentAdminResponse> updateStudent(
             @PathVariable Long id,
             @Valid @RequestBody UpdateStudentRequest request
     ) {
@@ -50,7 +61,7 @@ public class AdminStudentController {
     @GetMapping("/students/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Get student detail")
-    public ResponseEntity<StudentSummaryResponse> getStudent(@PathVariable Long id) {
+    public ResponseEntity<StudentAdminResponse> getStudent(@PathVariable Long id) {
         return ResponseEntity.ok(adminStudentService.getStudent(id));
     }
 
