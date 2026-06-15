@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import vn.edu.fpt.myfptschool.auth.dto.ResetPasswordRequest;
+import vn.edu.fpt.myfptschool.auth.dto.ToggleStatusRequest;
 import vn.edu.fpt.myfptschool.student.dto.*;
 import vn.edu.fpt.myfptschool.student.service.AdminStudentService;
 
@@ -63,6 +65,28 @@ public class AdminStudentController {
     @Operation(summary = "Get student detail")
     public ResponseEntity<StudentAdminResponse> getStudent(@PathVariable Long id) {
         return ResponseEntity.ok(adminStudentService.getStudent(id));
+    }
+
+    @PatchMapping("/students/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Activate or deactivate a student account")
+    public ResponseEntity<Void> toggleStudentStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ToggleStatusRequest request
+    ) {
+        adminStudentService.toggleStatus(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/students/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reset student account password")
+    public ResponseEntity<Void> resetStudentPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        adminStudentService.resetPassword(id, request);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/students/import/template")

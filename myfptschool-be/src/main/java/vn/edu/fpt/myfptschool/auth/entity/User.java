@@ -41,4 +41,8 @@ public class User extends BaseEntity {
     public void activate() {
         this.active = true;
     }
+
+    public void changePassword(String encodedPassword) {
+        this.passwordHash = encodedPassword;
+    }
 }

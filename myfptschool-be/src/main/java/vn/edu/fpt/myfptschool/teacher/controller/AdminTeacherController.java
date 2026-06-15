@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.fpt.myfptschool.auth.dto.ResetPasswordRequest;
+import vn.edu.fpt.myfptschool.auth.dto.ToggleStatusRequest;
 import vn.edu.fpt.myfptschool.teacher.dto.*;
 import vn.edu.fpt.myfptschool.teacher.service.AdminTeacherService;
 
@@ -55,5 +57,27 @@ public class AdminTeacherController {
     @Operation(summary = "Get teacher detail")
     public ResponseEntity<TeacherResponse> getTeacher(@PathVariable Long id) {
         return ResponseEntity.ok(adminTeacherService.getTeacher(id));
+    }
+
+    @PatchMapping("/teachers/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Activate or deactivate a teacher account")
+    public ResponseEntity<Void> toggleTeacherStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ToggleStatusRequest request
+    ) {
+        adminTeacherService.toggleStatus(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/teachers/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reset teacher account password")
+    public ResponseEntity<Void> resetTeacherPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        adminTeacherService.resetPassword(id, request);
+        return ResponseEntity.ok().build();
     }
 }

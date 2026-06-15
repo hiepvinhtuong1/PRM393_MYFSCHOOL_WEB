@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Download, Plus, Upload, X } from 'lucide-react'
-import { apiDownload, apiGet, apiUpload } from '@/shared/lib/api'
+import { apiDownload, apiGet, apiPatch, apiUpload } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
@@ -45,9 +45,21 @@ export function StudentListPage() {
     },
   })
 
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, active }: { id: number; active: boolean }) =>
+      apiPatch<void>(`/admin/students/${id}/status`, { active }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.students.list(params) }),
+  })
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) { importMutation.mutate(file); e.target.value = '' }
+  }
+
+  function handleToggle(s: Student) {
+    const action = s.active ? 'khóa' : 'mở khóa'
+    if (!confirm(`Bạn có chắc muốn ${action} tài khoản của ${s.fullName}?`)) return
+    toggleMutation.mutate({ id: s.id, active: !s.active })
   }
 
   return (
@@ -169,9 +181,18 @@ export function StudentListPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Link to={`/students/${s.id}/edit`} className="text-brand-blue hover:underline text-xs">
-                      Sửa
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/students/${s.id}/edit`} className="text-brand-blue hover:underline text-xs">
+                        Sửa
+                      </Link>
+                      <button
+                        onClick={() => handleToggle(s)}
+                        disabled={toggleMutation.isPending}
+                        className={`text-xs hover:underline disabled:opacity-50 ${s.active ? 'text-status-danger' : 'text-green-700'}`}
+                      >
+                        {s.active ? 'Khóa' : 'Mở khóa'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
