@@ -3,6 +3,9 @@ package vn.edu.fpt.myfptschool.student.service;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,8 +50,19 @@ public class AdminStudentService {
     // Single CRUD
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
+    public StudentPageResponse getAllStudents(String search, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Student> result = (search != null && !search.isBlank())
+                ? studentRepository.findByFullNameContainingIgnoreCase(search, pageable)
+                : studentRepository.findAll(pageable);
+        return new StudentPageResponse(
+                result.getContent().stream().map(StudentAdminResponse::from).toList(),
+                result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
+    }
+
     @Transactional
-    public StudentSummaryResponse createStudent(CreateStudentRequest req) {
+    public StudentAdminResponse createStudent(CreateStudentRequest req) {
         String username = (req.username() != null && !req.username().isBlank())
                 ? req.username()
                 : generateUsername(studentRepository.count() + 1);
@@ -74,12 +88,12 @@ public class AdminStudentService {
                 parseStudentDate(req.dateOfBirth()), req.gender(), req.phone(),
                 req.email(), req.photoUrl(), classroom));
 
-        return StudentSummaryResponse.from(student);
+        return StudentAdminResponse.from(student);
     }
 
     @Transactional
-    public StudentSummaryResponse updateStudent(Long id, UpdateStudentRequest req) {
-        Student student = studentRepository.findByIdWithClassroom(id)
+    public StudentAdminResponse updateStudent(Long id, UpdateStudentRequest req) {
+        Student student = studentRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         Classroom classroom = classroomRepository.findById(req.classroomId())
@@ -88,13 +102,13 @@ public class AdminStudentService {
         student.update(req.fullName(), parseStudentDate(req.dateOfBirth()), req.gender(),
                 req.phone(), req.email(), req.photoUrl(), classroom);
 
-        return StudentSummaryResponse.from(studentRepository.save(student));
+        return StudentAdminResponse.from(studentRepository.save(student));
     }
 
     @Transactional(readOnly = true)
-    public StudentSummaryResponse getStudent(Long id) {
-        return StudentSummaryResponse.from(
-                studentRepository.findByIdWithClassroom(id)
+    public StudentAdminResponse getStudent(Long id) {
+        return StudentAdminResponse.from(
+                studentRepository.findByIdWithDetails(id)
                         .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND))
         );
     }
