@@ -1,10 +1,14 @@
 package vn.edu.fpt.myfptschool.grade.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.academic.entity.ClassroomSubject;
 import vn.edu.fpt.myfptschool.academic.repository.ClassroomSubjectRepository;
+import vn.edu.fpt.myfptschool.auth.entity.User;
+import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.grade.dto.*;
@@ -14,6 +18,8 @@ import vn.edu.fpt.myfptschool.grade.repository.GradeRecordRepository;
 import vn.edu.fpt.myfptschool.grade.repository.ScoreComponentRepository;
 import vn.edu.fpt.myfptschool.student.entity.Student;
 import vn.edu.fpt.myfptschool.student.repository.StudentRepository;
+import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
+import vn.edu.fpt.myfptschool.teacher.repository.TeacherRepository;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -31,6 +37,8 @@ public class AdminGradeService {
 
     private final ClassroomSubjectRepository classroomSubjectRepository;
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final TeacherRepository teacherRepository;
     private final GradeRecordRepository gradeRecordRepository;
     private final ScoreComponentRepository scoreComponentRepository;
 
@@ -70,6 +78,8 @@ public class AdminGradeService {
     public void upsertGrades(Long classroomSubjectId, BulkUpsertGradesRequest request) {
         ClassroomSubject cs = classroomSubjectRepository.findByIdWithDetails(classroomSubjectId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Môn học lớp không tồn tại"));
+
+        checkTeacherOwnership(cs);
 
         List<Student> students = studentRepository.findByClassroomOrderByFullName(cs.getClassroom());
         Map<Long, Student> studentMap = students.stream().collect(Collectors.toMap(Student::getId, s -> s));
@@ -124,8 +134,23 @@ public class AdminGradeService {
         }
         GradeRecord record = gradeRecordRepository.findById(gradeRecordId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Bản ghi điểm không tồn tại"));
+        checkTeacherOwnership(record.getClassroomSubject());
         record.update(request.score());
         gradeRecordRepository.save(record);
+    }
+
+    private void checkTeacherOwnership(ClassroomSubject cs) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isTeacher = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"));
+        if (!isTeacher) return;
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.FORBIDDEN));
+        Teacher teacher = teacherRepository.findByUser(user)
+                .orElseThrow(() -> new AppException(ErrorCode.FORBIDDEN));
+        if (!cs.getTeacher().getId().equals(teacher.getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Bạn không phải giáo viên dạy môn này");
+        }
     }
 
     private StudentGradeRow buildStudentRow(Student student, List<ScoreComponent> components,
