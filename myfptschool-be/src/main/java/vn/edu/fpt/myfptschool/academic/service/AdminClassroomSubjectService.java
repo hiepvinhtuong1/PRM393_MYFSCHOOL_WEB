@@ -10,8 +10,10 @@ import vn.edu.fpt.myfptschool.academic.entity.*;
 import vn.edu.fpt.myfptschool.academic.repository.*;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
+import vn.edu.fpt.myfptschool.grade.repository.GradeRecordRepository;
 import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
 import vn.edu.fpt.myfptschool.teacher.repository.TeacherRepository;
+import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
 
 import java.util.List;
 
@@ -24,6 +26,8 @@ public class AdminClassroomSubjectService {
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
     private final SemesterRepository semesterRepository;
+    private final LessonRepository lessonRepository;
+    private final GradeRecordRepository gradeRecordRepository;
 
     @Transactional(readOnly = true)
     public ClassroomSubjectPageResponse getClassroomSubjects(Long classroomId, Long semesterId, int page, int size) {
@@ -61,6 +65,19 @@ public class AdminClassroomSubjectService {
                 ClassroomSubject.create(classroom, subject, teacher, semester));
 
         return ClassroomSubjectResponse.from(cs);
+    }
+
+    @Transactional
+    public void deleteClassroomSubject(Long id) {
+        ClassroomSubject cs = classroomSubjectRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Phân công không tồn tại"));
+        if (!lessonRepository.findByClassroomSubject(cs).isEmpty()) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Xóa tất cả tiết học của phân công này trước");
+        }
+        if (gradeRecordRepository.existsByClassroomSubject(cs)) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Xóa tất cả điểm số của phân công này trước");
+        }
+        classroomSubjectRepository.delete(cs);
     }
 
     @Transactional(readOnly = true)

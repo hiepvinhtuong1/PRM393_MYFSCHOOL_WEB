@@ -1,6 +1,7 @@
 package vn.edu.fpt.myfptschool.attendance.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vn.edu.fpt.myfptschool.attendance.entity.AttendanceRecord;
@@ -33,4 +34,8 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     List<AttendanceRecord> findByLesson(@Param("lesson") Lesson lesson);
 
     Optional<AttendanceRecord> findByLessonAndStudent(Lesson lesson, Student student);
+
+    @Modifying
+    @Query("DELETE FROM AttendanceRecord ar WHERE ar.lesson = :lesson")
+    void deleteByLesson(@Param("lesson") Lesson lesson);
 }

@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +39,17 @@ public class AdminGradeController {
     ) {
         adminGradeService.upsertGrades(id, request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/api/v1/admin/classroom-subjects/{id}/grades/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Xuất bảng điểm ra Excel")
+    public ResponseEntity<byte[]> exportGradeSheet(@PathVariable Long id) {
+        byte[] data = adminGradeService.exportGradeSheet(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bangdiem_" + id + ".xlsx\"")
+                .body(data);
     }
 
     @PutMapping("/api/v1/admin/grades/{id}")

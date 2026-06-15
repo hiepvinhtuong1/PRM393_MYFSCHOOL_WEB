@@ -52,6 +52,14 @@ public class AdminLessonController {
         return ResponseEntity.ok(adminLessonService.updateLesson(id, request));
     }
 
+    @DeleteMapping("/api/v1/admin/lessons/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xóa tiết học (cascade xóa điểm danh)")
+    public ResponseEntity<Void> deleteLesson(@PathVariable Long id) {
+        adminLessonService.deleteLesson(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/api/v1/admin/rooms")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "Danh sách phòng học")

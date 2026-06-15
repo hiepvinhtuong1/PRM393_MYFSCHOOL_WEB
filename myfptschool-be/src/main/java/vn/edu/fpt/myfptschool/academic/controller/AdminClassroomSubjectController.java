@@ -43,6 +43,14 @@ public class AdminClassroomSubjectController {
         return ResponseEntity.status(201).body(service.createClassroomSubject(request));
     }
 
+    @DeleteMapping("/classroom-subjects/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xóa phân công giảng dạy (chỉ khi chưa có tiết học và điểm số)")
+    public ResponseEntity<Void> deleteClassroomSubject(@PathVariable Long id) {
+        service.deleteClassroomSubject(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/subjects")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     @Operation(summary = "List all subjects (for dropdowns)")

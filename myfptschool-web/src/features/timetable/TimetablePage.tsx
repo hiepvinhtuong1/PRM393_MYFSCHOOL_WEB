@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X } from 'lucide-react'
-import { apiGet, apiPatch, apiPost } from '@/shared/lib/api'
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Select } from '@/shared/components/ui/Select'
@@ -67,6 +67,11 @@ export function TimetablePage() {
       roomId: form.roomId ? Number(form.roomId) : null,
     }),
     onSuccess: () => { invalidateLessons(); setShowForm(false); setForm({ lessonDate: '', startSlotId: '', endSlotId: '', roomId: '' }) },
+  })
+
+  const deleteLesson = useMutation({
+    mutationFn: (id: number) => apiDelete(`/admin/lessons/${id}`),
+    onSuccess: invalidateLessons,
   })
 
   const markDone = useMutation({
@@ -162,12 +167,24 @@ export function TimetablePage() {
                   </td>
                   <td className="px-4 py-3 text-text-secondary">{l.note ?? '—'}</td>
                   <td className="px-4 py-3">
-                    {l.status === 'scheduled' && (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => markDone.mutate(l.id)} loading={markDone.isPending}>Đã học</Button>
-                        <Button size="sm" variant="danger" onClick={() => cancel.mutate(l.id)} loading={cancel.isPending}>Hủy</Button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      {l.status === 'scheduled' && (
+                        <>
+                          <Button size="sm" variant="secondary" onClick={() => markDone.mutate(l.id)} loading={markDone.isPending}>Đã học</Button>
+                          <Button size="sm" variant="danger" onClick={() => cancel.mutate(l.id)} loading={cancel.isPending}>Hủy</Button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm(`Xóa tiết học ngày ${l.lessonDate} (${l.slotLabel})?`))
+                            deleteLesson.mutate(l.id)
+                        }}
+                        disabled={deleteLesson.isPending}
+                        className="text-xs text-status-danger hover:underline disabled:opacity-50"
+                      >
+                        Xóa
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

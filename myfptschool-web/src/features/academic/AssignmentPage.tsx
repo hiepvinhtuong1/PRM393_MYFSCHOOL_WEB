@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X } from 'lucide-react'
-import { apiGet, apiPost } from '@/shared/lib/api'
+import { apiDelete, apiGet, apiPost } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Select } from '@/shared/components/ui/Select'
@@ -40,6 +40,15 @@ export function AssignmentPage() {
     queryKey: queryKeys.classroomSubjects.list(params),
     queryFn: () => apiGet<PageResponse<ClassroomSubject>>('/admin/classroom-subjects', params),
     enabled: Boolean(semesterId),
+  })
+
+  const remove = useMutation({
+    mutationFn: (id: number) => apiDelete(`/admin/classroom-subjects/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.classroomSubjects.list({}) }),
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      alert(msg ?? 'Xóa phân công thất bại')
+    },
   })
 
   const create = useMutation({
@@ -117,14 +126,14 @@ export function AssignmentPage() {
           <table className="w-full text-sm">
             <thead className="bg-surface-elevated">
               <tr>
-                {['Lớp', 'Môn học', 'Giáo viên', 'Học kỳ'].map((h) => (
+                {['Lớp', 'Môn học', 'Giáo viên', 'Học kỳ', ''].map((h) => (
                   <th key={h} className="px-4 py-3 text-left font-semibold text-text-secondary text-xs uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-border-light">
               {isLoading && <tr><td colSpan={4} className="px-4 py-8 text-center text-text-tertiary">Đang tải...</td></tr>}
-              {!isLoading && !data?.content.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-text-tertiary">Chưa có phân công</td></tr>}
+              {!isLoading && !data?.content.length && <tr><td colSpan={5} className="px-4 py-8 text-center text-text-tertiary">Chưa có phân công</td></tr>}
               {data?.content.map((cs) => (
                 <tr key={cs.id} className="hover:bg-surface-bg">
                   <td className="px-4 py-3 font-medium">{cs.classroomName}</td>
@@ -136,6 +145,18 @@ export function AssignmentPage() {
                   </td>
                   <td className="px-4 py-3">{cs.teacherName}</td>
                   <td className="px-4 py-3 text-text-secondary">{cs.semesterName}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => {
+                        if (confirm(`Xóa phân công ${cs.classroomName} — ${cs.subjectName}?`))
+                          remove.mutate(cs.id)
+                      }}
+                      disabled={remove.isPending}
+                      className="text-xs text-status-danger hover:underline disabled:opacity-50"
+                    >
+                      Xóa
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { apiGet } from '@/shared/lib/api'
+import { Input } from '@/shared/components/ui/Input'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import type { Classroom, StudentSummary } from '@/shared/types/models'
 
 export function ClassroomListPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [studentSearch, setStudentSearch] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.classrooms.list(),
@@ -42,7 +44,7 @@ export function ClassroomListPage() {
               {classrooms.map((cl) => (
                 <button
                   key={cl.id}
-                  onClick={() => setSelectedId(selectedId === cl.id ? null : cl.id)}
+                  onClick={() => { setSelectedId(selectedId === cl.id ? null : cl.id); setStudentSearch('') }}
                   className={`bg-white px-4 py-3 transition-colors text-left w-full ${
                     selectedId === cl.id
                       ? 'bg-orange-50 ring-inset ring-1 ring-brand-orange'
@@ -61,19 +63,27 @@ export function ClassroomListPage() {
 
       {selectedId && (
         <div className="mt-6 bg-white rounded-xl border border-border-light shadow-sm">
-          <div className="px-5 py-3 border-b border-border-light flex items-center justify-between">
-            <h2 className="font-semibold text-text-primary">
+          <div className="px-5 py-3 border-b border-border-light flex items-center justify-between gap-4">
+            <h2 className="font-semibold text-text-primary shrink-0">
               Danh sách học sinh — {selectedClassroom?.name}
               <span className="ml-2 text-sm font-normal text-text-secondary">
                 ({selectedClassroom?.studentCount} HS)
               </span>
             </h2>
-            <button
-              onClick={() => setSelectedId(null)}
-              className="text-text-tertiary hover:text-text-primary"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-3">
+              <Input
+                placeholder="Tìm theo tên..."
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                className="w-48"
+              />
+              <button
+                onClick={() => setSelectedId(null)}
+                className="text-text-tertiary hover:text-text-primary shrink-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -93,7 +103,9 @@ export function ClassroomListPage() {
                 {!loadingStudents && !studentsData?.content.length && (
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-text-tertiary">Chưa có học sinh</td></tr>
                 )}
-                {studentsData?.content.map((s) => (
+                {studentsData?.content
+                  .filter((s) => !studentSearch || s.fullName.toLowerCase().includes(studentSearch.toLowerCase()))
+                  .map((s) => (
                   <tr key={s.id} className="hover:bg-surface-bg transition-colors">
                     <td className="px-4 py-3 font-mono text-xs">{s.studentCode}</td>
                     <td className="px-4 py-3 font-medium">{s.fullName}</td>

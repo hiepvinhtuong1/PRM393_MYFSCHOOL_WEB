@@ -38,4 +38,6 @@ public interface GradeRecordRepository extends JpaRepository<GradeRecord, Long> 
 
     Optional<GradeRecord> findByClassroomSubjectAndStudentAndComponent(
             ClassroomSubject classroomSubject, Student student, ScoreComponent component);
+
+    boolean existsByClassroomSubject(ClassroomSubject classroomSubject);
 }
