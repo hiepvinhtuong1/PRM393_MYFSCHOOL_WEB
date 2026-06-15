@@ -9,6 +9,7 @@ import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
@@ -55,4 +56,14 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
             @Param("classroomId") Long classroomId,
             @Param("semesterId") Long semesterId
     );
+
+    @Query("""
+        SELECT l FROM Lesson l
+        JOIN FETCH l.startSlot ss
+        JOIN FETCH l.endSlot es
+        LEFT JOIN FETCH l.room r
+        WHERE l.classroomSubject = :cs
+        ORDER BY l.lessonDate ASC, ss.slotNumber ASC
+        """)
+    List<Lesson> findByClassroomSubjectOrdered(@Param("cs") ClassroomSubject cs);
 }

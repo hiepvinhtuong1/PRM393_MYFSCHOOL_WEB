@@ -55,4 +55,10 @@ public class Lesson extends BaseEntity {
         l.hasMaterials = false;
         return l;
     }
+
+    public void update(LessonStatus status, Room room, String note) {
+        this.status = status;
+        this.room = room;
+        this.note = note;
+    }
 }
