@@ -2,18 +2,17 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
-import type { PageResponse } from '@/shared/types/api'
 import type { Classroom } from '@/shared/types/models'
 
 export function ClassroomListPage() {
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.classrooms.list(),
-    queryFn: () => apiGet<PageResponse<Classroom>>('/admin/classrooms', { size: 100 }),
+    queryFn: () => apiGet<Classroom[]>('/admin/classrooms'),
   })
 
   const byGrade = [10, 11, 12].map((g) => ({
     grade: g,
-    classrooms: data?.content.filter((cl) => cl.gradeLevel === g) ?? [],
+    classrooms: data?.filter((cl) => cl.gradeLevel === g) ?? [],
   }))
 
   return (
