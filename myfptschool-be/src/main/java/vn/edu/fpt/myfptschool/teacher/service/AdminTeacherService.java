@@ -13,6 +13,8 @@ import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
+import vn.edu.fpt.myfptschool.auth.dto.ResetPasswordRequest;
+import vn.edu.fpt.myfptschool.auth.dto.ToggleStatusRequest;
 import vn.edu.fpt.myfptschool.teacher.dto.*;
 import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
 import vn.edu.fpt.myfptschool.teacher.repository.TeacherRepository;
@@ -81,5 +83,25 @@ public class AdminTeacherService {
                 teacherRepository.findById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND))
         );
+    }
+
+    @Transactional
+    public void toggleStatus(Long id, ToggleStatusRequest req) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        User user = teacher.getUser();
+        if (user == null) throw new AppException(ErrorCode.NOT_FOUND);
+        if (req.active()) user.activate(); else user.deactivate();
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void resetPassword(Long id, ResetPasswordRequest req) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        User user = teacher.getUser();
+        if (user == null) throw new AppException(ErrorCode.NOT_FOUND);
+        user.changePassword(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
     }
 }

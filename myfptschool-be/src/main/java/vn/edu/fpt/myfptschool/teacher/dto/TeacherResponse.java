@@ -9,7 +9,8 @@ public record TeacherResponse(
         String email,
         Long campusId,
         String campusName,
-        String username
+        String username,
+        boolean active
 ) {
     public static TeacherResponse from(Teacher t) {
         return new TeacherResponse(
@@ -19,7 +20,8 @@ public record TeacherResponse(
                 t.getEmail(),
                 t.getCampus() != null ? t.getCampus().getId() : null,
                 t.getCampus() != null ? t.getCampus().getName() : null,
-                t.getUser() != null ? t.getUser().getUsername() : null
+                t.getUser() != null ? t.getUser().getUsername() : null,
+                t.getUser() != null && t.getUser().isActive()
         );
     }
 }

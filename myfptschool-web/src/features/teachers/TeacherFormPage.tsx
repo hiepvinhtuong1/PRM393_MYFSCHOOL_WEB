@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost, apiPut } from '@/shared/lib/api'
+import { apiGet, apiPatch, apiPost, apiPut } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
@@ -53,6 +54,14 @@ export function TeacherFormPage() {
       : undefined,
   })
 
+  const [newPwd, setNewPwd] = useState('')
+  const [pwdSuccess, setPwdSuccess] = useState(false)
+
+  const resetPwdMutation = useMutation({
+    mutationFn: () => apiPatch<void>(`/admin/teachers/${id}/password`, { newPassword: newPwd }),
+    onSuccess: () => { setNewPwd(''); setPwdSuccess(true); setTimeout(() => setPwdSuccess(false), 3000) },
+  })
+
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
       isEdit
@@ -84,6 +93,33 @@ export function TeacherFormPage() {
             <h2 className="font-semibold text-text-primary">Tài khoản</h2>
             <Input label="Tên đăng nhập *" error={errors.username?.message} {...register('username')} />
             <Input label="Mật khẩu (mặc định: Teacher@123)" type="password" error={errors.password?.message} {...register('password')} />
+          </div>
+        )}
+
+        {isEdit && (
+          <div className="bg-white rounded-xl border border-border-light p-6 shadow-sm space-y-4">
+            <h2 className="font-semibold text-text-primary">Đặt lại mật khẩu</h2>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Input
+                  label="Mật khẩu mới (tối thiểu 6 ký tự)"
+                  type="password"
+                  value={newPwd}
+                  onChange={(e) => setNewPwd(e.target.value)}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                loading={resetPwdMutation.isPending}
+                disabled={newPwd.length < 6}
+                onClick={() => resetPwdMutation.mutate()}
+              >
+                Đặt lại
+              </Button>
+            </div>
+            {pwdSuccess && <p className="text-sm text-green-700">Đã đặt lại mật khẩu thành công.</p>}
+            {resetPwdMutation.isError && <p className="text-sm text-status-danger">Đặt lại mật khẩu thất bại.</p>}
           </div>
         )}
 
