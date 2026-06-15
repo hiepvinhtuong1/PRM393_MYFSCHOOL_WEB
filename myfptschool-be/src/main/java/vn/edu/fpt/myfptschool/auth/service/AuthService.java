@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.auth.dto.LoginRequest;
 import vn.edu.fpt.myfptschool.auth.dto.LoginResponse;
 import vn.edu.fpt.myfptschool.auth.dto.RefreshRequest;
+import vn.edu.fpt.myfptschool.auth.entity.Role;
 import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.auth.entity.UserSession;
 import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
@@ -15,6 +16,7 @@ import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.config.AppProperties;
 import vn.edu.fpt.myfptschool.security.JwtTokenProvider;
+import vn.edu.fpt.myfptschool.teacher.repository.TeacherRepository;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -29,6 +31,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AppProperties appProperties;
+    private final TeacherRepository teacherRepository;
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -93,6 +96,18 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .expiresIn(appProperties.getJwt().getExpirationMs() / 1000)
                 .role(user.getRole().name())
+                .userId(user.getId())
+                .username(user.getUsername())
+                .fullName(resolveFullName(user))
                 .build();
+    }
+
+    private String resolveFullName(User user) {
+        if (user.getRole() == Role.TEACHER) {
+            return teacherRepository.findByUser(user)
+                    .map(t -> t.getFullName())
+                    .orElse(user.getUsername());
+        }
+        return user.getUsername();
     }
 }

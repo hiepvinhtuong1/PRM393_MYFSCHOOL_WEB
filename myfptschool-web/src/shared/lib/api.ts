@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { type InternalAxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/shared/types/api'
 
 const api = axios.create({
@@ -12,16 +12,76 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Auto-refresh on 401
+let isRefreshing = false
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token!)))
+  failedQueue = []
+}
+
+function clearSession() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('auth_user')
+  window.location.href = '/login'
+}
+
+interface RetryConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean
+}
+
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('auth_user')
-      window.location.href = '/login'
+  async (err) => {
+    const originalRequest = err.config as RetryConfig
+
+    if (err.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(err)
     }
-    return Promise.reject(err)
-  }
+
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) {
+      clearSession()
+      return Promise.reject(err)
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({
+          resolve: (token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            resolve(api(originalRequest))
+          },
+          reject,
+        })
+      })
+    }
+
+    originalRequest._retry = true
+    isRefreshing = true
+
+    try {
+      const res = await axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+        '/api/v1/auth/refresh',
+        { refreshToken },
+      )
+      const { accessToken, refreshToken: newRefreshToken } = res.data.data
+      localStorage.setItem('access_token', accessToken)
+      localStorage.setItem('refresh_token', newRefreshToken)
+      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+      processQueue(null, accessToken)
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`
+      return api(originalRequest)
+    } catch (refreshErr) {
+      processQueue(refreshErr, null)
+      clearSession()
+      return Promise.reject(refreshErr)
+    } finally {
+      isRefreshing = false
+    }
+  },
 )
 
 export async function apiGet<T>(url: string, params?: object): Promise<T> {
