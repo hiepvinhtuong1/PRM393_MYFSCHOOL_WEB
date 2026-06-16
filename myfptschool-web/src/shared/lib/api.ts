@@ -85,23 +85,23 @@ api.interceptors.response.use(
 )
 
 export async function apiGet<T>(url: string, params?: object): Promise<T> {
-  const res = await api.get<ApiResponse<T>>(url, { params })
-  return res.data.data
+  const res = await api.get<T>(url, { params })
+  return res.data
 }
 
 export async function apiPost<T>(url: string, data?: unknown): Promise<T> {
-  const res = await api.post<ApiResponse<T>>(url, data)
-  return res.data.data
+  const res = await api.post<T>(url, data)
+  return res.data
 }
 
 export async function apiPut<T>(url: string, data?: unknown): Promise<T> {
-  const res = await api.put<ApiResponse<T>>(url, data)
-  return res.data.data
+  const res = await api.put<T>(url, data)
+  return res.data
 }
 
 export async function apiPatch<T>(url: string, data?: unknown): Promise<T> {
-  const res = await api.patch<ApiResponse<T>>(url, data)
-  return res.data.data
+  const res = await api.patch<T>(url, data)
+  return res.data
 }
 
 export async function apiDelete(url: string): Promise<void> {
@@ -118,11 +118,11 @@ export async function apiDownload(url: string, filename: string): Promise<void> 
 }
 
 export async function apiUpload<T>(url: string, formData: FormData): Promise<T> {
-  const res = await api.post<ApiResponse<T>>(url, formData, {
+  const res = await api.post<T>(url, formData, {
     headers: { 'Content-Type': undefined },
     validateStatus: (s) => s < 500,
   })
-  return res.data.data
+  return res.data
 }
 
 export default api
