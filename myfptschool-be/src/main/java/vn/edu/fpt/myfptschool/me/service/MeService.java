@@ -2,6 +2,7 @@ package vn.edu.fpt.myfptschool.me.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.fpt.myfptschool.academic.repository.ClassroomSubjectRepository;
@@ -10,15 +11,22 @@ import vn.edu.fpt.myfptschool.auth.entity.User;
 import vn.edu.fpt.myfptschool.auth.repository.UserRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
+import vn.edu.fpt.myfptschool.attendance.repository.AttendanceRecordRepository;
+import vn.edu.fpt.myfptschool.me.dto.ChangePasswordRequest;
+import vn.edu.fpt.myfptschool.me.dto.MyClassroomSubjectResponse;
 import vn.edu.fpt.myfptschool.me.dto.ParentProfileResponse;
 import vn.edu.fpt.myfptschool.me.dto.SemesterResponse;
 import vn.edu.fpt.myfptschool.me.dto.StudentProfileResponse;
 import vn.edu.fpt.myfptschool.me.dto.TeacherContactResponse;
+import vn.edu.fpt.myfptschool.me.dto.TodayLessonResponse;
 import vn.edu.fpt.myfptschool.parent.repository.ParentRepository;
 import vn.edu.fpt.myfptschool.student.entity.Student;
 import vn.edu.fpt.myfptschool.student.repository.StudentRepository;
 import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
+import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
+import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +40,9 @@ public class MeService {
     private final ParentRepository parentRepository;
     private final SemesterRepository semesterRepository;
     private final ClassroomSubjectRepository classroomSubjectRepository;
+    private final LessonRepository lessonRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public Object getProfile(String username) {
@@ -69,8 +80,19 @@ public class MeService {
             case STUDENT -> studentRepository.findByUserWithClassroom(user)
                     .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
             case PARENT -> {
-                if (studentId == null) throw new AppException(ErrorCode.NOT_FOUND);
-                yield studentRepository.findByIdWithClassroom(studentId)
+                var parent = parentRepository.findByUserWithChildren(user)
+                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                Long resolvedId = (studentId != null)
+                        ? parent.getChildren().stream()
+                                .filter(s -> s.getId().equals(studentId))
+                                .findFirst()
+                                .map(Student::getId)
+                                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND))
+                        : parent.getChildren().stream()
+                                .findFirst()
+                                .map(Student::getId)
+                                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+                yield studentRepository.findByIdWithClassroom(resolvedId)
                         .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
             }
             default -> throw new AppException(ErrorCode.NOT_FOUND);
@@ -105,5 +127,47 @@ public class MeService {
         }
 
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyClassroomSubjectResponse> getMyClassroomSubjects(String username) {
+        return classroomSubjectRepository.findByTeacherUsername(username).stream()
+                .map(MyClassroomSubjectResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TodayLessonResponse> getTodayLessons(String username) {
+        List<Lesson> lessons = lessonRepository.findTodayByTeacherUsername(username, LocalDate.now());
+        if (lessons.isEmpty()) return List.of();
+
+        List<Long> lessonIds = lessons.stream().map(Lesson::getId).toList();
+        Set<Long> recordedIds = attendanceRecordRepository.findLessonIdsWithAttendance(lessonIds);
+
+        return lessons.stream()
+                .map(l -> TodayLessonResponse.from(l, recordedIds.contains(l.getId())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TodayLessonResponse> getMyLessons(String username, LocalDate startDate, LocalDate endDate) {
+        List<Lesson> lessons = lessonRepository.findByTeacherUsernameAndDateBetween(username, startDate, endDate);
+        if (lessons.isEmpty()) return List.of();
+        List<Long> lessonIds = lessons.stream().map(Lesson::getId).toList();
+        Set<Long> recordedIds = attendanceRecordRepository.findLessonIdsWithAttendance(lessonIds);
+        return lessons.stream()
+                .map(l -> TodayLessonResponse.from(l, recordedIds.contains(l.getId())))
+                .toList();
+    }
+
+    @Transactional
+    public void changePassword(String username, ChangePasswordRequest req) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        if (!passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
+            throw new AppException(ErrorCode.WRONG_PASSWORD);
+        }
+        user.changePassword(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
     }
 }
