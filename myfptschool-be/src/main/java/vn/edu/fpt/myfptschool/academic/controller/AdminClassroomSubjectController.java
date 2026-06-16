@@ -53,15 +53,52 @@ public class AdminClassroomSubjectController {
 
     @GetMapping("/subjects")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    @Operation(summary = "List all subjects (for dropdowns)")
+    @Operation(summary = "List all subjects")
     public ResponseEntity<List<SubjectResponse>> getAllSubjects() {
         return ResponseEntity.ok(service.getAllSubjects());
     }
 
+    @PostMapping("/subjects")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Tạo môn học mới")
+    public ResponseEntity<SubjectResponse> createSubject(@Valid @RequestBody CreateSubjectRequest request) {
+        return ResponseEntity.status(201).body(service.createSubject(request));
+    }
+
+    @PutMapping("/subjects/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật môn học")
+    public ResponseEntity<SubjectResponse> updateSubject(@PathVariable Long id,
+                                                         @Valid @RequestBody UpdateSubjectRequest request) {
+        return ResponseEntity.ok(service.updateSubject(id, request));
+    }
+
     @GetMapping("/semesters")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    @Operation(summary = "List all semesters (for dropdowns)")
+    @Operation(summary = "List all semesters")
     public ResponseEntity<List<SemesterResponse>> getAllSemesters() {
         return ResponseEntity.ok(service.getAllSemesters());
+    }
+
+    @PostMapping("/semesters")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Tạo học kỳ mới")
+    public ResponseEntity<SemesterResponse> createSemester(@Valid @RequestBody CreateSemesterRequest request) {
+        return ResponseEntity.status(201).body(service.createSemester(request));
+    }
+
+    @PutMapping("/semesters/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật học kỳ")
+    public ResponseEntity<SemesterResponse> updateSemester(@PathVariable Long id,
+                                                            @Valid @RequestBody UpdateSemesterRequest request) {
+        return ResponseEntity.ok(service.updateSemester(id, request));
+    }
+
+    @GetMapping("/academic-years")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "List all academic years (for semester form dropdown)")
+    public ResponseEntity<List<AcademicYearResponse>> getAcademicYears() {
+        return ResponseEntity.ok(service.getAcademicYears());
     }
 }

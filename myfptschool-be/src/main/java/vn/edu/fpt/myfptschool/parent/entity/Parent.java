@@ -72,4 +72,8 @@ public class Parent extends BaseEntity {
     public void addChild(Student student) {
         children.add(student);
     }
+
+    public void removeChild(Student student) {
+        children.removeIf(c -> c.getId().equals(student.getId()));
+    }
 }

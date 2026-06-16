@@ -120,6 +120,33 @@ public class AdminParentService {
         return ParentResponse.from(parentRepository.save(parent));
     }
 
+    @Transactional
+    public ParentResponse toggleStatus(Long id) {
+        Parent parent = parentRepository.findByIdWithChildren(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        if (parent.getUser() == null) throw new AppException(ErrorCode.VALIDATION_FAILED, "Phụ huynh chưa có tài khoản");
+        if (parent.getUser().isActive()) {
+            parent.getUser().deactivate();
+        } else {
+            parent.getUser().activate();
+        }
+        userRepository.save(parent.getUser());
+        return ParentResponse.from(parent);
+    }
+
+    @Transactional
+    public ParentResponse unlinkStudent(Long parentId, Long studentId) {
+        Parent parent = parentRepository.findByIdWithChildren(parentId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        if (!parentRepository.existsByIdAndChildrenId(parentId, studentId)) {
+            throw new AppException(ErrorCode.VALIDATION_FAILED, "Học sinh này chưa được liên kết với phụ huynh");
+        }
+        parent.removeChild(student);
+        return ParentResponse.from(parentRepository.save(parent));
+    }
+
     private LocalDate parseAndValidateDate(String raw) {
         if (raw == null || raw.isBlank()) return null;
         try {

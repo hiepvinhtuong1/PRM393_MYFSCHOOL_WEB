@@ -66,4 +66,21 @@ public class AdminParentController {
     ) {
         return ResponseEntity.ok(adminParentService.linkParentToStudent(studentId, parentId));
     }
+
+    @PatchMapping("/parents/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Bật / tắt tài khoản phụ huynh")
+    public ResponseEntity<ParentResponse> toggleStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(adminParentService.toggleStatus(id));
+    }
+
+    @DeleteMapping("/parents/{id}/students/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Gỡ liên kết phụ huynh – học sinh")
+    public ResponseEntity<ParentResponse> unlinkStudent(
+            @PathVariable Long id,
+            @PathVariable Long studentId
+    ) {
+        return ResponseEntity.ok(adminParentService.unlinkStudent(id, studentId));
+    }
 }

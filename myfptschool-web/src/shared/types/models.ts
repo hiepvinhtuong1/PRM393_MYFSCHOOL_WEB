@@ -56,6 +56,7 @@ export interface Parent {
   phone: string | null
   email: string | null
   username: string | null
+  active: boolean
   children: StudentSummary[]
 }
 
@@ -112,6 +113,24 @@ export interface Notification {
   body: string
   category: string
   isRead: boolean
+  createdAt: string
+}
+
+export interface AcademicYear {
+  id: number
+  label: string
+  startDate: string
+  endDate: string
+}
+
+export interface SentNotification {
+  id: number
+  title: string
+  body: string
+  category: string
+  targetType: string
+  targetId: number | null
+  recipientCount: number
   createdAt: string
 }
 

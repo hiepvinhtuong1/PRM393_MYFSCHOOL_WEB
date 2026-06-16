@@ -15,6 +15,7 @@ import vn.edu.fpt.myfptschool.teacher.entity.Teacher;
 import vn.edu.fpt.myfptschool.teacher.repository.TeacherRepository;
 import vn.edu.fpt.myfptschool.timetable.repository.LessonRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -26,6 +27,7 @@ public class AdminClassroomSubjectService {
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
     private final SemesterRepository semesterRepository;
+    private final AcademicYearRepository academicYearRepository;
     private final LessonRepository lessonRepository;
     private final GradeRecordRepository gradeRecordRepository;
 
@@ -85,8 +87,50 @@ public class AdminClassroomSubjectService {
         return subjectRepository.findAll().stream().map(SubjectResponse::from).toList();
     }
 
+    @Transactional
+    public SubjectResponse createSubject(CreateSubjectRequest req) {
+        Subject subject = subjectRepository.save(
+                Subject.create(req.name(), req.colorHex(), req.coefficient()));
+        return SubjectResponse.from(subject);
+    }
+
+    @Transactional
+    public SubjectResponse updateSubject(Long id, UpdateSubjectRequest req) {
+        Subject subject = subjectRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Môn học không tồn tại"));
+        subject.update(req.name(), req.colorHex(), req.coefficient());
+        return SubjectResponse.from(subjectRepository.save(subject));
+    }
+
     @Transactional(readOnly = true)
     public List<SemesterResponse> getAllSemesters() {
         return semesterRepository.findAllWithAcademicYear().stream().map(SemesterResponse::from).toList();
+    }
+
+    @Transactional
+    public SemesterResponse createSemester(CreateSemesterRequest req) {
+        AcademicYear academicYear = academicYearRepository.findById(req.academicYearId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Năm học không tồn tại"));
+        LocalDate start = LocalDate.parse(req.startDate());
+        LocalDate end = LocalDate.parse(req.endDate());
+        Semester semester = semesterRepository.save(Semester.create(academicYear, req.name(), start, end));
+        return SemesterResponse.from(semester);
+    }
+
+    @Transactional
+    public SemesterResponse updateSemester(Long id, UpdateSemesterRequest req) {
+        Semester semester = semesterRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Học kỳ không tồn tại"));
+        AcademicYear academicYear = academicYearRepository.findById(req.academicYearId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Năm học không tồn tại"));
+        LocalDate start = LocalDate.parse(req.startDate());
+        LocalDate end = LocalDate.parse(req.endDate());
+        semester.update(academicYear, req.name(), start, end);
+        return SemesterResponse.from(semesterRepository.save(semester));
+    }
+
+    @Transactional(readOnly = true)
+    public List<AcademicYearResponse> getAcademicYears() {
+        return academicYearRepository.findAll().stream().map(AcademicYearResponse::from).toList();
     }
 }

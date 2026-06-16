@@ -30,6 +30,8 @@ export function TimetablePage() {
   const [csId, setCsId] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ lessonDate: '', startSlotId: '', endSlotId: '', roomId: '' })
+  const [editLesson, setEditLesson] = useState<Lesson | null>(null)
+  const [editForm, setEditForm] = useState({ status: '', roomId: '', note: '' })
   const qc = useQueryClient()
 
   const { data: semesters } = useQuery({
@@ -54,7 +56,7 @@ export function TimetablePage() {
   const { data: rooms } = useQuery({
     queryKey: queryKeys.rooms.list(),
     queryFn: () => apiGet<Room[]>('/admin/rooms'),
-    enabled: showForm,
+    enabled: showForm || Boolean(editLesson),
   })
 
   const invalidateLessons = () => qc.invalidateQueries({ queryKey: queryKeys.classroomSubjects.lessons(Number(csId)) })
@@ -82,6 +84,19 @@ export function TimetablePage() {
     mutationFn: (id: number) => apiPatch(`/admin/lessons/${id}`, { status: 'cancelled' }),
     onSuccess: invalidateLessons,
   })
+  const updateLesson = useMutation({
+    mutationFn: () => apiPatch(`/admin/lessons/${editLesson!.id}`, {
+      status: editForm.status || editLesson!.status,
+      roomId: editForm.roomId ? Number(editForm.roomId) : null,
+      note: editForm.note || null,
+    }),
+    onSuccess: () => { invalidateLessons(); setEditLesson(null) },
+  })
+
+  function openEdit(l: Lesson) {
+    setEditLesson(l)
+    setEditForm({ status: l.status, roomId: l.roomId ? String(l.roomId) : '', note: l.note ?? '' })
+  }
 
   return (
     <div>
@@ -143,6 +158,33 @@ export function TimetablePage() {
         </div>
       )}
 
+      {editLesson && (
+        <div className="bg-white rounded-xl border border-border-light shadow-sm p-5 mb-6 max-w-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-text-primary">Sửa tiết học — {editLesson.lessonDate} ({editLesson.slotLabel})</h2>
+            <button onClick={() => setEditLesson(null)}><X size={18} className="text-text-tertiary hover:text-text-primary" /></button>
+          </div>
+          <div className="space-y-3">
+            <Select label="Trạng thái" value={editForm.status} onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value }))}>
+              <option value="scheduled">Lịch học</option>
+              <option value="completed">Đã học</option>
+              <option value="cancelled">Đã hủy</option>
+              <option value="makeup">Bù</option>
+            </Select>
+            <Select label="Phòng học" value={editForm.roomId} onChange={(e) => setEditForm(f => ({ ...f, roomId: e.target.value }))}>
+              <option value="">-- Không có / Chọn sau --</option>
+              {rooms?.map((r) => <option key={r.id} value={r.id}>{r.code} ({r.campusName})</option>)}
+            </Select>
+            <Input label="Ghi chú" value={editForm.note} onChange={(e) => setEditForm(f => ({ ...f, note: e.target.value }))} />
+          </div>
+          {updateLesson.isError && <p className="text-sm text-status-danger mt-3">Cập nhật thất bại.</p>}
+          <div className="flex gap-3 mt-4">
+            <Button variant="secondary" onClick={() => setEditLesson(null)}>Hủy</Button>
+            <Button onClick={() => updateLesson.mutate()} loading={updateLesson.isPending}>Lưu thay đổi</Button>
+          </div>
+        </div>
+      )}
+
       {csId && (
         <div className="bg-white rounded-xl border border-border-light shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
@@ -167,7 +209,13 @@ export function TimetablePage() {
                   </td>
                   <td className="px-4 py-3 text-text-secondary">{l.note ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => openEdit(l)}
+                        className="text-xs text-brand-blue hover:underline"
+                      >
+                        Sửa
+                      </button>
                       {l.status === 'scheduled' && (
                         <>
                           <Button size="sm" variant="secondary" onClick={() => markDone.mutate(l.id)} loading={markDone.isPending}>Đã học</Button>

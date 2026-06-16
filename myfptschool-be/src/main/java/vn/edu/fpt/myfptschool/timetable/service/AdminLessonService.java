@@ -8,11 +8,15 @@ import vn.edu.fpt.myfptschool.academic.repository.ClassroomSubjectRepository;
 import vn.edu.fpt.myfptschool.attendance.repository.AttendanceRecordRepository;
 import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
+import vn.edu.fpt.myfptschool.academic.entity.Campus;
+import vn.edu.fpt.myfptschool.academic.repository.CampusRepository;
 import vn.edu.fpt.myfptschool.timetable.dto.AdminLessonResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.CreateLessonRequest;
+import vn.edu.fpt.myfptschool.timetable.dto.CreateRoomRequest;
 import vn.edu.fpt.myfptschool.timetable.dto.RoomResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.TimeSlotResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.UpdateLessonRequest;
+import vn.edu.fpt.myfptschool.timetable.dto.UpdateRoomRequest;
 import vn.edu.fpt.myfptschool.timetable.entity.Lesson;
 import vn.edu.fpt.myfptschool.timetable.entity.LessonStatus;
 import vn.edu.fpt.myfptschool.timetable.entity.Room;
@@ -34,6 +38,7 @@ public class AdminLessonService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final RoomRepository roomRepository;
+    private final CampusRepository campusRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -119,6 +124,24 @@ public class AdminLessonService {
     @Transactional(readOnly = true)
     public List<RoomResponse> getRooms() {
         return roomRepository.findAll().stream().map(RoomResponse::from).toList();
+    }
+
+    @Transactional
+    public RoomResponse createRoom(CreateRoomRequest req) {
+        Campus campus = campusRepository.findById(req.campusId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Cơ sở không tồn tại"));
+        Room room = roomRepository.save(Room.create(req.code(), campus));
+        return RoomResponse.from(room);
+    }
+
+    @Transactional
+    public RoomResponse updateRoom(Long id, UpdateRoomRequest req) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Phòng học không tồn tại"));
+        Campus campus = campusRepository.findById(req.campusId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Cơ sở không tồn tại"));
+        room.update(req.code(), campus);
+        return RoomResponse.from(roomRepository.save(room));
     }
 
     @Transactional(readOnly = true)

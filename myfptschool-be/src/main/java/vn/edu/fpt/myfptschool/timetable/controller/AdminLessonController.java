@@ -10,9 +10,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.fpt.myfptschool.timetable.dto.AdminLessonResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.CreateLessonRequest;
+import vn.edu.fpt.myfptschool.timetable.dto.CreateRoomRequest;
 import vn.edu.fpt.myfptschool.timetable.dto.RoomResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.TimeSlotResponse;
 import vn.edu.fpt.myfptschool.timetable.dto.UpdateLessonRequest;
+import vn.edu.fpt.myfptschool.timetable.dto.UpdateRoomRequest;
 import vn.edu.fpt.myfptschool.timetable.service.AdminLessonService;
 
 import java.util.List;
@@ -65,6 +67,21 @@ public class AdminLessonController {
     @Operation(summary = "Danh sách phòng học")
     public ResponseEntity<List<RoomResponse>> getRooms() {
         return ResponseEntity.ok(adminLessonService.getRooms());
+    }
+
+    @PostMapping("/api/v1/admin/rooms")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Tạo phòng học mới")
+    public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody CreateRoomRequest request) {
+        return ResponseEntity.status(201).body(adminLessonService.createRoom(request));
+    }
+
+    @PutMapping("/api/v1/admin/rooms/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật phòng học")
+    public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long id,
+                                                    @Valid @RequestBody UpdateRoomRequest request) {
+        return ResponseEntity.ok(adminLessonService.updateRoom(id, request));
     }
 
     @GetMapping("/api/v1/admin/time-slots")

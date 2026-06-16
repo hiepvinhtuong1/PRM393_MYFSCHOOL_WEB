@@ -14,6 +14,7 @@ public record ParentResponse(
         String phone,
         String email,
         String username,
+        boolean active,
         List<StudentSummaryResponse> children
 ) {
     public static ParentResponse from(Parent p) {
@@ -26,6 +27,7 @@ public record ParentResponse(
                 p.getPhone(),
                 p.getEmail(),
                 p.getUser() != null ? p.getUser().getUsername() : null,
+                p.getUser() != null && p.getUser().isActive(),
                 p.getChildren().stream().map(StudentSummaryResponse::from).toList()
         );
     }

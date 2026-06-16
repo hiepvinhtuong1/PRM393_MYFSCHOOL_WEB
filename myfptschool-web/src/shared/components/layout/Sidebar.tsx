@@ -4,6 +4,7 @@ import { useAuth } from '@/shared/hooks/useAuth'
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen,
   CalendarDays, ClipboardList, BarChart3, Bell, LogOut, UserCheck,
+  LibraryBig, DoorOpen, Calendar,
 } from 'lucide-react'
 
 const navItems = [
@@ -15,6 +16,9 @@ const navItems = [
   { label: 'Lớp học', to: '/classrooms', icon: School },
   { group: 'Giảng dạy' },
   { label: 'Phân công', to: '/assignments', icon: BookOpen, adminOnly: true },
+  { label: 'Học kỳ', to: '/semesters', icon: Calendar, adminOnly: true },
+  { label: 'Môn học', to: '/subjects', icon: LibraryBig, adminOnly: true },
+  { label: 'Phòng học', to: '/rooms', icon: DoorOpen, adminOnly: true },
   { label: 'Thời khóa biểu', to: '/timetable', icon: CalendarDays },
   { group: 'Nghiệp vụ' },
   { label: 'Điểm danh', to: '/attendance', icon: ClipboardList },

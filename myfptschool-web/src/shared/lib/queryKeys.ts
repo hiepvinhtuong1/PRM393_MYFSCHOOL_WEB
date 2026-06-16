@@ -39,7 +39,11 @@ export const queryKeys = {
   timeSlots: {
     list: () => ['time-slots'] as const,
   },
+  academicYears: {
+    list: () => ['academic-years'] as const,
+  },
   notifications: {
     list: (params: object) => ['notifications', 'list', params] as const,
+    sent: (params: object) => ['notifications', 'sent', params] as const,
   },
 }
