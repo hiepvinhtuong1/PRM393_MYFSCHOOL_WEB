@@ -12,6 +12,7 @@ import vn.edu.fpt.myfptschool.common.exception.AppException;
 import vn.edu.fpt.myfptschool.common.exception.ErrorCode;
 import vn.edu.fpt.myfptschool.notification.dto.NotificationPageResponse;
 import vn.edu.fpt.myfptschool.notification.dto.NotificationResponse;
+import vn.edu.fpt.myfptschool.notification.entity.NotificationCategory;
 import vn.edu.fpt.myfptschool.notification.repository.NotificationRecipientRepository;
 
 import java.time.LocalDateTime;
@@ -24,14 +25,23 @@ public class NotificationService {
     private final NotificationRecipientRepository recipientRepository;
 
     @Transactional(readOnly = true)
-    public NotificationPageResponse getNotifications(String username, int page, int size) {
+    public NotificationPageResponse getNotifications(String username, int page, int size, String category) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<NotificationResponse> responsePage = recipientRepository
-                .findByUser(user, pageable)
-                .map(NotificationResponse::from);
+        Page<NotificationResponse> responsePage;
+
+        if (category != null && !category.isBlank()) {
+            NotificationCategory cat = NotificationCategory.valueOf(category.toLowerCase());
+            responsePage = recipientRepository
+                    .findByUserAndCategory(user, cat, pageable)
+                    .map(NotificationResponse::from);
+        } else {
+            responsePage = recipientRepository
+                    .findByUser(user, pageable)
+                    .map(NotificationResponse::from);
+        }
 
         long unreadCount = recipientRepository.countUnread(user);
 

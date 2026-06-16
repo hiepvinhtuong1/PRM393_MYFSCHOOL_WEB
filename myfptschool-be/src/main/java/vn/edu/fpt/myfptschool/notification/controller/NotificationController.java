@@ -23,14 +23,15 @@ public class NotificationController {
 
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyRole('STUDENT', 'PARENT', 'TEACHER', 'ADMIN')")
-    @Operation(summary = "Get paginated notifications for current user")
+    @Operation(summary = "Get paginated notifications for current user, optionally filtered by category")
     public ResponseEntity<NotificationPageResponse> getNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String category
     ) {
         return ResponseEntity.ok(
-                notificationService.getNotifications(userDetails.getUsername(), page, size)
+                notificationService.getNotifications(userDetails.getUsername(), page, size, category)
         );
     }
 

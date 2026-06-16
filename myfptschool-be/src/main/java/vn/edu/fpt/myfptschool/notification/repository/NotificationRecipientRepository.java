@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vn.edu.fpt.myfptschool.auth.entity.User;
+import vn.edu.fpt.myfptschool.notification.entity.NotificationCategory;
 import vn.edu.fpt.myfptschool.notification.entity.NotificationRecipient;
 
 import java.time.LocalDateTime;
@@ -36,6 +37,24 @@ public interface NotificationRecipientRepository extends JpaRepository<Notificat
             @Param("notificationId") Long notificationId,
             @Param("now") LocalDateTime now
     );
+
+    @Query(
+        value = """
+            SELECT nr FROM NotificationRecipient nr
+            JOIN FETCH nr.notification n
+            WHERE nr.user = :user AND n.category = :category
+            ORDER BY n.createdAt DESC
+            """,
+        countQuery = """
+            SELECT COUNT(nr) FROM NotificationRecipient nr
+            JOIN nr.notification n
+            WHERE nr.user = :user AND n.category = :category
+            """
+    )
+    Page<NotificationRecipient> findByUserAndCategory(
+            @Param("user") User user,
+            @Param("category") NotificationCategory category,
+            Pageable pageable);
 
     @Query("SELECT COUNT(nr) FROM NotificationRecipient nr WHERE nr.user = :user AND nr.isRead = false")
     long countUnread(@Param("user") User user);
