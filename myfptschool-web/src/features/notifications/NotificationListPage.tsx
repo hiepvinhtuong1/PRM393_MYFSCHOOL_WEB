@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { apiGet, apiPut } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
+import { useAuth } from '@/shared/hooks/useAuth'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -37,6 +38,7 @@ const targetTypeLabel: Record<string, string> = {
 }
 
 export function NotificationListPage() {
+  const { isAdmin } = useAuth()
   const [tab, setTab] = useState<'inbox' | 'sent'>('inbox')
   const [page, setPage] = useState(0)
   const qc = useQueryClient()
@@ -68,15 +70,15 @@ export function NotificationListPage() {
     <div>
       <PageHeader
         title="Thông báo"
-        actions={
+        actions={isAdmin ? (
           <Link to="/notifications/new">
             <Button><Plus size={16} /> Soạn thông báo</Button>
           </Link>
-        }
+        ) : undefined}
       />
 
       <div className="flex gap-1 mb-4 border-b border-border-light">
-        {(['inbox', 'sent'] as const).map((t) => (
+        {(['inbox', ...(isAdmin ? ['sent'] : [])] as ('inbox' | 'sent')[]).map((t) => (
           <button
             key={t}
             onClick={() => switchTab(t)}

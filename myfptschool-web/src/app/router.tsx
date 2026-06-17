@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/shared/components/layout/AppShell'
 import { ProtectedRoute } from './ProtectedRoute'
+import { AdminRoute } from './AdminRoute'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { StudentListPage } from '@/features/students/StudentListPage'
@@ -13,12 +14,16 @@ import { ClassroomListPage } from '@/features/classrooms/ClassroomListPage'
 import { AssignmentPage } from '@/features/academic/AssignmentPage'
 import { SemesterListPage } from '@/features/academic/SemesterListPage'
 import { SubjectListPage } from '@/features/academic/SubjectListPage'
+import { AcademicYearListPage } from '@/features/academic/AcademicYearListPage'
 import { TimetablePage } from '@/features/timetable/TimetablePage'
 import { RoomListPage } from '@/features/timetable/RoomListPage'
 import { AttendancePage } from '@/features/attendance/AttendancePage'
 import { GradesPage } from '@/features/grades/GradesPage'
 import { NotificationListPage } from '@/features/notifications/NotificationListPage'
 import { NotificationComposePage } from '@/features/notifications/NotificationComposePage'
+import { MyStudentsPage } from '@/features/students/MyStudentsPage'
+import { MyTimetablePage } from '@/features/timetable/MyTimetablePage'
+import { ProfilePage } from '@/features/profile/ProfilePage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -31,24 +36,33 @@ export const router = createBrowserRouter([
           { path: '/', element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/students', element: <StudentListPage /> },
-          { path: '/students/new', element: <StudentFormPage /> },
-          { path: '/students/:id/edit', element: <StudentFormPage /> },
-          { path: '/teachers', element: <TeacherListPage /> },
-          { path: '/teachers/new', element: <TeacherFormPage /> },
-          { path: '/teachers/:id/edit', element: <TeacherFormPage /> },
-          { path: '/parents', element: <ParentListPage /> },
-          { path: '/parents/new', element: <ParentFormPage /> },
-          { path: '/parents/:id/edit', element: <ParentFormPage /> },
           { path: '/classrooms', element: <ClassroomListPage /> },
-          { path: '/assignments', element: <AssignmentPage /> },
-          { path: '/semesters', element: <SemesterListPage /> },
-          { path: '/subjects', element: <SubjectListPage /> },
-          { path: '/rooms', element: <RoomListPage /> },
           { path: '/timetable', element: <TimetablePage /> },
           { path: '/attendance', element: <AttendancePage /> },
           { path: '/grades', element: <GradesPage /> },
           { path: '/notifications', element: <NotificationListPage /> },
-          { path: '/notifications/new', element: <NotificationComposePage /> },
+          { path: '/my-students', element: <MyStudentsPage /> },
+          { path: '/my-timetable', element: <MyTimetablePage /> },
+          { path: '/profile', element: <ProfilePage /> },
+          {
+            element: <AdminRoute />,
+            children: [
+              { path: '/students/new', element: <StudentFormPage /> },
+              { path: '/students/:id/edit', element: <StudentFormPage /> },
+              { path: '/teachers', element: <TeacherListPage /> },
+              { path: '/teachers/new', element: <TeacherFormPage /> },
+              { path: '/teachers/:id/edit', element: <TeacherFormPage /> },
+              { path: '/parents', element: <ParentListPage /> },
+              { path: '/parents/new', element: <ParentFormPage /> },
+              { path: '/parents/:id/edit', element: <ParentFormPage /> },
+              { path: '/assignments', element: <AssignmentPage /> },
+              { path: '/semesters', element: <SemesterListPage /> },
+              { path: '/subjects', element: <SubjectListPage /> },
+              { path: '/academic-years', element: <AcademicYearListPage /> },
+              { path: '/rooms', element: <RoomListPage /> },
+              { path: '/notifications/new', element: <NotificationComposePage /> },
+            ],
+          },
         ],
       },
     ],
