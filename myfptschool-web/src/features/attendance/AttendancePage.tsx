@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost } from '@/shared/lib/api'
+import { apiGet, apiPost, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { useAuth } from '@/shared/hooks/useAuth'
 import { PageHeader } from '@/shared/components/PageHeader'
@@ -215,7 +215,7 @@ export function AttendancePage() {
 
           {submit.isError && (
             <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-status-danger">
-              Lưu thất bại. Vui lòng thử lại.
+              {getApiErrorMessage(submit.error, 'Lưu điểm danh thất bại. Vui lòng thử lại.')}
             </div>
           )}
           {submit.isSuccess && (

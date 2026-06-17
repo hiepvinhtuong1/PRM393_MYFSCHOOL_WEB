@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiDelete, apiGet, apiPost, apiPut } from '@/shared/lib/api'
+import { apiDelete, apiGet, apiPost, apiPut, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
@@ -125,7 +125,9 @@ export function ParentFormPage() {
           )}
 
           {mutation.isError && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">Có lỗi xảy ra. Kiểm tra lại thông tin.</div>
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">
+              {getApiErrorMessage(mutation.error, 'Có lỗi xảy ra. Kiểm tra lại thông tin.')}
+            </div>
           )}
 
           <div className="flex gap-3">

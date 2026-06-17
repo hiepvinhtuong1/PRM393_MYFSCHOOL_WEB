@@ -9,30 +9,29 @@ import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/shared/components/ui/Input'
-import { Select } from '@/shared/components/ui/Select'
-import type { Campus } from '@/shared/types/models'
 
-interface Room { id: number; code: string; campusId: number; campusName: string }
+interface AcademicYear {
+  id: number
+  label: string
+  startDate: string
+  endDate: string
+}
 
 const schema = z.object({
-  code: z.string().min(1).max(30),
-  campusId: z.string().min(1, 'Chọn cơ sở'),
+  label: z.string().min(1).max(20),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Định dạng YYYY-MM-DD'),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Định dạng YYYY-MM-DD'),
 })
 type FormData = z.infer<typeof schema>
 
-export function RoomListPage() {
+export function AcademicYearListPage() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<Room | null>(null)
+  const [editing, setEditing] = useState<AcademicYear | null>(null)
 
-  const { data: rooms, isLoading } = useQuery({
-    queryKey: queryKeys.rooms.list(),
-    queryFn: () => apiGet<Room[]>('/admin/rooms'),
-  })
-  const { data: campuses } = useQuery({
-    queryKey: queryKeys.campuses.list(),
-    queryFn: () => apiGet<Campus[]>('/admin/campuses'),
-    enabled: showForm || Boolean(editing),
+  const { data: years, isLoading } = useQuery({
+    queryKey: queryKeys.academicYears.list(),
+    queryFn: () => apiGet<AcademicYear[]>('/admin/academic-years'),
   })
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -42,25 +41,23 @@ export function RoomListPage() {
 
   function openCreate() {
     setEditing(null)
-    reset({ code: '', campusId: '' })
+    reset({ label: '', startDate: '', endDate: '' })
     setShowForm(true)
   }
 
-  function openEdit(r: Room) {
-    setEditing(r)
-    reset({ code: r.code, campusId: String(r.campusId) })
+  function openEdit(ay: AcademicYear) {
+    setEditing(ay)
+    reset({ label: ay.label, startDate: ay.startDate, endDate: ay.endDate })
     setShowForm(true)
   }
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => {
-      const payload = { ...data, campusId: Number(data.campusId) }
-      return editing
-        ? apiPut(`/admin/rooms/${editing.id}`, payload)
-        : apiPost('/admin/rooms', payload)
-    },
+    mutationFn: (data: FormData) =>
+      editing
+        ? apiPut(`/admin/academic-years/${editing.id}`, data)
+        : apiPost('/admin/academic-years', data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.rooms.list() })
+      qc.invalidateQueries({ queryKey: queryKeys.academicYears.list() })
       setShowForm(false)
       setEditing(null)
     },
@@ -69,22 +66,20 @@ export function RoomListPage() {
   return (
     <div>
       <PageHeader
-        title="Phòng học"
-        actions={<Button onClick={openCreate}><Plus size={16} /> Thêm phòng</Button>}
+        title="Năm học"
+        actions={<Button onClick={openCreate}><Plus size={16} /> Thêm năm học</Button>}
       />
 
       {showForm && (
         <div className="bg-white rounded-xl border border-border-light shadow-sm p-5 mb-6 max-w-md">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-text-primary">{editing ? 'Sửa phòng học' : 'Thêm phòng học'}</h2>
+            <h2 className="font-semibold text-text-primary">{editing ? 'Sửa năm học' : 'Thêm năm học'}</h2>
             <button onClick={() => setShowForm(false)}><X size={18} className="text-text-tertiary hover:text-text-primary" /></button>
           </div>
           <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-3">
-            <Input label="Mã phòng *" placeholder="A101" error={errors.code?.message} {...register('code')} />
-            <Select label="Cơ sở *" error={errors.campusId?.message} {...register('campusId')}>
-              <option value="">-- Chọn cơ sở --</option>
-              {campuses?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
+            <Input label="Nhãn (VD: 2025-2026) *" error={errors.label?.message} {...register('label')} />
+            <Input label="Ngày bắt đầu * (YYYY-MM-DD)" placeholder="2025-09-01" error={errors.startDate?.message} {...register('startDate')} />
+            <Input label="Ngày kết thúc * (YYYY-MM-DD)" placeholder="2026-06-30" error={errors.endDate?.message} {...register('endDate')} />
             {mutation.isError && <p className="text-sm text-status-danger">{getApiErrorMessage(mutation.error, 'Có lỗi. Kiểm tra lại thông tin.')}</p>}
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Hủy</Button>
@@ -98,20 +93,21 @@ export function RoomListPage() {
         <table className="w-full text-sm">
           <thead className="bg-surface-elevated">
             <tr>
-              {['Mã phòng', 'Cơ sở', ''].map((h) => (
+              {['Nhãn', 'Bắt đầu', 'Kết thúc', ''].map((h) => (
                 <th key={h} className="px-4 py-3 text-left font-semibold text-text-secondary text-xs uppercase tracking-wide">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border-light">
-            {isLoading && <tr><td colSpan={3} className="px-4 py-8 text-center text-text-tertiary">Đang tải...</td></tr>}
-            {!isLoading && !rooms?.length && <tr><td colSpan={3} className="px-4 py-8 text-center text-text-tertiary">Chưa có phòng học nào</td></tr>}
-            {rooms?.map((r) => (
-              <tr key={r.id} className="hover:bg-surface-bg transition-colors">
-                <td className="px-4 py-3 font-medium font-mono">{r.code}</td>
-                <td className="px-4 py-3">{r.campusName}</td>
+            {isLoading && <tr><td colSpan={4} className="px-4 py-8 text-center text-text-tertiary">Đang tải...</td></tr>}
+            {!isLoading && !years?.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-text-tertiary">Chưa có năm học nào</td></tr>}
+            {years?.map((ay) => (
+              <tr key={ay.id} className="hover:bg-surface-bg transition-colors">
+                <td className="px-4 py-3 font-medium">{ay.label}</td>
+                <td className="px-4 py-3 text-text-secondary">{ay.startDate}</td>
+                <td className="px-4 py-3 text-text-secondary">{ay.endDate}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => openEdit(r)} className="flex items-center gap-1 text-xs text-brand-blue hover:underline">
+                  <button onClick={() => openEdit(ay)} className="flex items-center gap-1 text-xs text-brand-blue hover:underline">
                     <Pencil size={12} /> Sửa
                   </button>
                 </td>

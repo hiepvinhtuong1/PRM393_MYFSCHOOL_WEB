@@ -33,7 +33,19 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Unwrap { code, message, data } ApiResponse wrapper from backend
+    if (
+      res.data !== null &&
+      typeof res.data === 'object' &&
+      'code' in res.data &&
+      'data' in res.data &&
+      'message' in res.data
+    ) {
+      res.data = (res.data as { code: number; message: string | null; data: unknown }).data
+    }
+    return res
+  },
   async (err) => {
     const originalRequest = err.config as RetryConfig
 
@@ -123,6 +135,14 @@ export async function apiUpload<T>(url: string, formData: FormData): Promise<T> 
     validateStatus: (s) => s < 500,
   })
   return res.data
+}
+
+/** Extract the human-readable message from a backend ApiResponse error. */
+export function getApiErrorMessage(error: unknown, fallback = 'Đã xảy ra lỗi, vui lòng thử lại'): string {
+  if (axios.isAxiosError(error)) {
+    return (error.response?.data as { message?: string } | undefined)?.message ?? fallback
+  }
+  return fallback
 }
 
 export default api

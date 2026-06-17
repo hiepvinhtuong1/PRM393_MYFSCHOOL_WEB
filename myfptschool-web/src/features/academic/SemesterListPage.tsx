@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, X, Pencil } from 'lucide-react'
-import { apiGet, apiPost, apiPut } from '@/shared/lib/api'
+import { apiGet, apiPost, apiPut, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
@@ -49,7 +49,7 @@ export function SemesterListPage() {
   function openEdit(s: Semester) {
     setEditing(s)
     reset({
-      academicYearId: '',
+      academicYearId: String(s.academicYearId),
       name: s.name,
       startDate: s.startDate,
       endDate: s.endDate,
@@ -92,7 +92,7 @@ export function SemesterListPage() {
             <Input label="Tên học kỳ * (e.g. HK1, HK2)" error={errors.name?.message} {...register('name')} />
             <Input label="Ngày bắt đầu * (YYYY-MM-DD)" placeholder="2025-09-01" error={errors.startDate?.message} {...register('startDate')} />
             <Input label="Ngày kết thúc * (YYYY-MM-DD)" placeholder="2026-01-15" error={errors.endDate?.message} {...register('endDate')} />
-            {mutation.isError && <p className="text-sm text-status-danger">Có lỗi. Kiểm tra lại thông tin.</p>}
+            {mutation.isError && <p className="text-sm text-status-danger">{getApiErrorMessage(mutation.error, 'Có lỗi. Kiểm tra lại thông tin.')}</p>}
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Hủy</Button>
               <Button type="submit" loading={isSubmitting || mutation.isPending}>Lưu</Button>

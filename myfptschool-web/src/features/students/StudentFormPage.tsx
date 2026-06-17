@@ -4,14 +4,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPatch, apiPost, apiPut } from '@/shared/lib/api'
+import { apiGet, apiPatch, apiPost, apiPut, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
 import { Select } from '@/shared/components/ui/Select'
 import { Button } from '@/shared/components/ui/Button'
 import type { Classroom, Student } from '@/shared/types/models'
-import type { PageResponse } from '@/shared/types/api'
 
 const schema = z.object({
   fullName: z.string().min(2).max(100),
@@ -34,7 +33,7 @@ export function StudentFormPage() {
 
   const { data: classrooms } = useQuery({
     queryKey: queryKeys.classrooms.list(),
-    queryFn: () => apiGet<PageResponse<Classroom>>('/admin/classrooms', { size: 100 }),
+    queryFn: () => apiGet<Classroom[]>('/admin/classrooms'),
   })
 
   const { data: student } = useQuery({
@@ -95,7 +94,7 @@ export function StudentFormPage() {
           </Select>
           <Select label="Lớp *" error={errors.classroomId?.message} {...register('classroomId')}>
             <option value="">-- Chọn lớp --</option>
-            {classrooms?.content.map((cl) => (
+            {classrooms?.map((cl) => (
               <option key={cl.id} value={cl.id}>{cl.name}</option>
             ))}
           </Select>
@@ -139,13 +138,13 @@ export function StudentFormPage() {
               </Button>
             </div>
             {pwdSuccess && <p className="text-sm text-green-700">Đã đặt lại mật khẩu thành công.</p>}
-            {resetPwdMutation.isError && <p className="text-sm text-status-danger">Đặt lại mật khẩu thất bại.</p>}
+            {resetPwdMutation.isError && <p className="text-sm text-status-danger">{getApiErrorMessage(resetPwdMutation.error, 'Đặt lại mật khẩu thất bại.')}</p>}
           </div>
         )}
 
         {mutation.isError && (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">
-            Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.
+            {getApiErrorMessage(mutation.error, 'Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.')}
           </div>
         )}
 

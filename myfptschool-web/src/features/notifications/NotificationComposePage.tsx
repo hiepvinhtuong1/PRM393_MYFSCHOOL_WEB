@@ -3,13 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { apiGet, apiPost } from '@/shared/lib/api'
+import { apiGet, apiPost, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
+import { useAuth } from '@/shared/hooks/useAuth'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
 import { Select } from '@/shared/components/ui/Select'
 import { Button } from '@/shared/components/ui/Button'
-import type { Classroom } from '@/shared/types/models'
+import type { Classroom, MyClassroomSubject } from '@/shared/types/models'
 
 const schema = z.object({
   targetType: z.enum(['individual', 'classroom', 'all']),
@@ -17,6 +18,10 @@ const schema = z.object({
   category: z.enum(['attendance', 'grade', 'homeroom', 'study', 'event']),
   title: z.string().min(1).max(200),
   body: z.string().min(1),
+}).superRefine((data, ctx) => {
+  if ((data.targetType === 'individual' || data.targetType === 'classroom') && !data.targetId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng chọn đối tượng', path: ['targetId'] })
+  }
 })
 type FormData = z.infer<typeof schema>
 
@@ -24,6 +29,7 @@ const categoryLabels = { attendance: 'Điểm danh', grade: 'Điểm số', home
 
 export function NotificationComposePage() {
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
@@ -31,11 +37,23 @@ export function NotificationComposePage() {
   })
   const targetType = watch('targetType')
 
-  const { data: classrooms } = useQuery({
+  // Admin: all classrooms; Teacher: only their classrooms from CS assignments
+  const { data: allClassrooms } = useQuery({
     queryKey: queryKeys.classrooms.list(),
     queryFn: () => apiGet<Classroom[]>('/admin/classrooms'),
-    enabled: targetType === 'classroom',
+    enabled: isAdmin && targetType === 'classroom',
   })
+  const { data: myCS = [] } = useQuery({
+    queryKey: queryKeys.me.classroomSubjects(),
+    queryFn: () => apiGet<MyClassroomSubject[]>('/me/classroom-subjects'),
+    enabled: !isAdmin && targetType === 'classroom',
+  })
+
+  // Deduplicate classrooms from teacher's CS list
+  const myClassrooms = Array.from(
+    new Map(myCS.map((cs) => [cs.classroomId, { id: cs.classroomId, name: cs.classroomName }])).values()
+  )
+  const classroomOptions = isAdmin ? (allClassrooms ?? []) : myClassrooms
 
   const send = useMutation({
     mutationFn: (data: FormData) => apiPost<{ notificationId: number; recipientCount: number }>('/admin/notifications', data),
@@ -65,7 +83,7 @@ export function NotificationComposePage() {
           {targetType === 'classroom' && (
             <Select label="Chọn lớp" error={errors.targetId?.message} {...register('targetId')}>
               <option value="">-- Chọn lớp --</option>
-              {classrooms?.map((cl) => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
+              {classroomOptions.map((cl) => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
             </Select>
           )}
           {targetType === 'individual' && (
@@ -90,7 +108,9 @@ export function NotificationComposePage() {
         </div>
 
         {send.isError && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">Gửi thất bại. Kiểm tra lại.</div>
+          <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">
+            {getApiErrorMessage(send.error, 'Gửi thông báo thất bại. Kiểm tra lại.')}
+          </div>
         )}
 
         <div className="flex gap-3">

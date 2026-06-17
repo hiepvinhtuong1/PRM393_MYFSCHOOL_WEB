@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, X } from 'lucide-react'
-import { apiDelete, apiGet, apiPost } from '@/shared/lib/api'
+import { apiDelete, apiGet, apiPost, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Select } from '@/shared/components/ui/Select'
@@ -100,7 +100,7 @@ export function AssignmentPage() {
               {teachersPage?.content.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
             </Select>
           </div>
-          {create.isError && <p className="text-sm text-status-danger mt-3">Tạo phân công thất bại. Kiểm tra lại (có thể đã tồn tại).</p>}
+          {create.isError && <p className="text-sm text-status-danger mt-3">{getApiErrorMessage(create.error, 'Tạo phân công thất bại.')}</p>}
           <div className="flex gap-3 mt-4">
             <Button variant="secondary" onClick={() => setShowForm(false)}>Hủy</Button>
             <Button onClick={() => create.mutate()} loading={create.isPending} disabled={!canSubmit}>Tạo phân công</Button>

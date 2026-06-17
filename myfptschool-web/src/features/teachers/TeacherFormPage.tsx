@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPatch, apiPost, apiPut } from '@/shared/lib/api'
+import { apiGet, apiPatch, apiPost, apiPut, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Input } from '@/shared/components/ui/Input'
@@ -119,13 +119,13 @@ export function TeacherFormPage() {
               </Button>
             </div>
             {pwdSuccess && <p className="text-sm text-green-700">Đã đặt lại mật khẩu thành công.</p>}
-            {resetPwdMutation.isError && <p className="text-sm text-status-danger">Đặt lại mật khẩu thất bại.</p>}
+            {resetPwdMutation.isError && <p className="text-sm text-status-danger">{getApiErrorMessage(resetPwdMutation.error, 'Đặt lại mật khẩu thất bại.')}</p>}
           </div>
         )}
 
         {mutation.isError && (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-status-danger">
-            Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.
+            {getApiErrorMessage(mutation.error, 'Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.')}
           </div>
         )}
 

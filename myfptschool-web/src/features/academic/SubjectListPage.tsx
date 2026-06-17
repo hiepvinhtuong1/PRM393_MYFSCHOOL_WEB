@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, X, Pencil } from 'lucide-react'
-import { apiGet, apiPost, apiPut } from '@/shared/lib/api'
+import { apiGet, apiPost, apiPut, getApiErrorMessage } from '@/shared/lib/api'
 import { queryKeys } from '@/shared/lib/queryKeys'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
@@ -76,7 +76,7 @@ export function SubjectListPage() {
             <Input label="Tên môn học *" error={errors.name?.message} {...register('name')} />
             <Input label="Hệ số *" type="number" min={1} error={errors.coefficient?.message} {...register('coefficient')} />
             <Input label="Màu (#HEX)" placeholder="#4A90E2" error={errors.colorHex?.message} {...register('colorHex')} />
-            {mutation.isError && <p className="text-sm text-status-danger">Có lỗi. Kiểm tra lại thông tin.</p>}
+            {mutation.isError && <p className="text-sm text-status-danger">{getApiErrorMessage(mutation.error, 'Có lỗi. Kiểm tra lại thông tin.')}</p>}
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Hủy</Button>
               <Button type="submit" loading={isSubmitting || mutation.isPending}>Lưu</Button>
